@@ -5,8 +5,7 @@ using UnityEngine;
 public class Characters : MonoBehaviour {
 
     #region Inspector Variables
-    [SerializeField]
-    float speed = 10;
+    public float speed = 10;
     [SerializeField]
     float jumpMomentumInfluenceRate;
     [SerializeField]
@@ -21,7 +20,8 @@ public class Characters : MonoBehaviour {
     #endregion
 
     #region Internal Components
-    CharacterController controller;
+    [HideInInspector]
+    public CharacterController controller;
     #endregion
 
     private float airControlDir = 0;
@@ -72,6 +72,8 @@ public class Characters : MonoBehaviour {
 
         moveDirection.y -= sharedVariables.Gravity * Time.deltaTime;
         controller.Move(moveDirection * Time.deltaTime);
+
+        //Debug.Log("Velocity X of " + gameObject.name + " is " + controller.velocity.x);
     }
 
     void AirControl (float MomentumInfluenceBaseRate)
