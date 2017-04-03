@@ -17,6 +17,7 @@ public class Characters : MonoBehaviour {
 
     #region Moves Vars
     Vector3 moveDirection;
+    float MomentumOnJump;
     #endregion
 
     #region Internal Components
@@ -57,24 +58,29 @@ public class Characters : MonoBehaviour {
             moveDirection = new Vector3(HorizontalDirection, VerticalDirection);
             moveDirection = transform.TransformDirection(moveDirection);
             moveDirection *= speed;
+
             if (jump)
             {
                 moveDirection.y = jumpStrength;
+                MomentumOnJump = controller.velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
             }
         }
         else
         {
-            AirControl(); //TODO : Write the air control. We have to keep a max momentum that matches Pauline max speed on foot (Maybe a little more)
-            //We have to influence on the momentum when hitting the directional keys in mid-air
+            AirControl(HorizontalDirection);
         }
 
         moveDirection.y -= sharedVariables.Gravity * Time.deltaTime;
         controller.Move(moveDirection * Time.deltaTime);
     }
 
-    void AirControl ()
+    void AirControl (float MomentumInfluenceBaseRate)
     {
+        if (MomentumInfluenceBaseRate != 0) //This check is to prevent the character to just stop the momentum in middle-air
+            MomentumOnJump = Mathf.Lerp(MomentumOnJump, MomentumInfluenceBaseRate * speed, jumpMomentumInfluenceRate);
 
+        moveDirection.x = MomentumOnJump;
+        moveDirection.x = Mathf.Clamp(moveDirection.x, -speed, speed);
     }
 
 }
