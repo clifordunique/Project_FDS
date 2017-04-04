@@ -168,7 +168,7 @@ namespace ProBuilder2.EditorCommon
 					pbs[i].Optimize();		
 				} catch (System.Exception e)
 				{
-					Debug.LogWarning("Failed reconstituting " + pbs[i].name + ".  Proceeding with upgrade anyways.  Usually this means a prefab is already fixed, and just needs to be instantiated to take effect.\n" + e.ToString());
+					//Debug.LogWarning("Failed reconstituting " + pbs[i].name + ".  Proceeding with upgrade anyways.  Usually this means a prefab is already fixed, and just needs to be instantiated to take effect.\n" + e.ToString());
 				}
 			}
 
@@ -180,7 +180,7 @@ namespace ProBuilder2.EditorCommon
 			EditorUtility.DisplayDialog("Success", "Successfully repaired " + total + " ProBuilder objects.", "Okay");
 
 			if(!pb_EditorSceneUtility.SaveCurrentSceneIfUserWantsTo())
-				Debug.LogWarning("Repaired script references will be lost on exit if this scene is not saved!");
+				//Debug.LogWarning("Repaired script references will be lost on exit if this scene is not saved!");
 
 			doFix = false;
 			skipEvent = true;
@@ -322,7 +322,7 @@ namespace ProBuilder2.EditorCommon
 					Undo.RegisterCompleteObjectUndo(target, "Fix missing reference.");
 				}
 			
-				// Debug.Log("Fix: " + (pbObjectMatches > 2 ? "pb_Object" : "pb_Entity") + "  " + ((Component)target).gameObject.name);
+				// //Debug.Log("Fix: " + (pbObjectMatches > 2 ? "pb_Object" : "pb_Entity") + "  " + ((Component)target).gameObject.name);
 
 				scriptProperty.objectReferenceValue = pbObjectMatches >= 3 ? pb_monoscript : pe_monoscript;
 				scriptProperty.serializedObject.ApplyModifiedProperties();

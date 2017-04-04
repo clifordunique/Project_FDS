@@ -7,7 +7,7 @@ public class Player : Characters {
     bool jump = false;
 
 	// Update is called once per frame
-	void Update ()
+	void FixedUpdate ()
     {
         jump = Input.GetButtonDown("Jump");
         Move(Input.GetAxisRaw("Horizontal"), jump);

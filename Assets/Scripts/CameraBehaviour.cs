@@ -28,7 +28,7 @@ public class CameraBehaviour : MonoBehaviour {
 	// Use this for initialization
 	void Start ()
     {
-        player = GameObject.Find("Pauline");
+        player = GameObject.FindGameObjectWithTag("Player");
         playerScript = player.GetComponent<Player>();
         MoveToTargetPoint(false);
     }
@@ -46,7 +46,7 @@ public class CameraBehaviour : MonoBehaviour {
                 goingLeft = false;
             }
 
-            if (Mathf.Abs(playerScript.controller.velocity.x) >= playerScript.speed * .9f)
+            if (Mathf.Abs(playerScript.collider.GetComponent<Rigidbody>().velocity.x) >= playerScript.speed * .9f)
             {
                 MaxSpeedMomentumPercent += Time.deltaTime * MomentumRate;
             }
@@ -60,12 +60,12 @@ public class CameraBehaviour : MonoBehaviour {
             if (MaxSpeedMomentumPercent >= .5f) //Depending on the player's total momentum, the alignment of the camera won't go as fast
             {
                 MarginDamp = MaxMarginDamp;
-                Debug.Log("MaxDamp used");
+                //Debug.Log("MaxDamp used");
             }
             else if (MaxSpeedMomentumPercent <= 0f)
             {
                 MarginDamp = MinMarginDamp;
-                Debug.Log("MinDamp used");
+                ////Debug.Log("MinDamp used");
             }
 
 
