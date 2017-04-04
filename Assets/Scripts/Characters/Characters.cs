@@ -12,11 +12,14 @@ public class Characters : MonoBehaviour {
     float jumpStrength = 12;
     [SerializeField]
     float jumpSpeed = 50;
+    [SerializeField]
+    float groundTreshold = .1f;
     #endregion
 
     #region Moves Vars
     Vector3 moveDirection;
     float MomentumOnJump;
+    private float airControlDir = 0;
     #endregion
 
     #region Internal Components
@@ -24,11 +27,43 @@ public class Characters : MonoBehaviour {
     public CharacterController controller;
     #endregion
 
-    private float airControlDir = 0;
-
     #region external components
     CharactersSharedVariables sharedVariables;
     #endregion
+
+    bool CheckIfGrounded ()
+    {
+        RaycastHit hit;
+
+        Vector3 p1 = transform.position + controller.center;
+        float distanceToObstacle = 0;
+
+        Debug.DrawRay(p1, -transform.up * groundTreshold, Color.red);
+
+        // Cast a sphere wrapping character controller 10 meters downward
+        // to see if it is about to hit anything.
+        if (Physics.SphereCast(p1, controller.radius, -transform.up, out hit, Mathf.Infinity))
+        { 
+            distanceToObstacle = hit.distance;
+
+            if (distanceToObstacle <= groundTreshold)
+            {
+                Debug.Log("I'M GROUNDED MOTHERFUCKER");
+                return true;
+
+            }
+            else
+            {
+                Debug.Log("I'M NOT GROUNDED MOTHERFUCKER");
+                return false;
+            }
+        }
+        else
+        {
+            Debug.Log("I'M NOT GROUNDED MOTHERFUCKER");
+            return false;
+        }
+    }
 
     // Use this for initialization
     void Start ()
@@ -53,7 +88,7 @@ public class Characters : MonoBehaviour {
     public void Move (float HorizontalDirection, float VerticalDirection, bool jump)
     {
 
-        if (controller.isGrounded)
+        if (CheckIfGrounded())
         {
             moveDirection = new Vector3(HorizontalDirection, VerticalDirection);
             moveDirection = transform.TransformDirection(moveDirection);
