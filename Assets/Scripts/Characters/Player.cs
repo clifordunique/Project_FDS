@@ -5,11 +5,19 @@ using UnityEngine;
 public class Player : Characters {
 
     bool jump = false;
+    CollisionTests collisionTests;
 
-	// TODO : Try to find the best between Update and FixedUpdate
-	void Update ()
+    private void Start()
+    {
+        collisionTests = gameObject.GetComponent<CollisionTests>();
+    }
+
+    // TODO : Try to find the best between Update and FixedUpdate
+	void FixedUpdate ()
     {
         jump = Input.GetButtonDown("Jump");
         Move(Input.GetAxisRaw("Horizontal"), jump);
+
+        //collisionTests.ClearTests();
 	}
 }
