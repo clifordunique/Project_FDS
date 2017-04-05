@@ -126,8 +126,12 @@ public class Characters : MonoBehaviour {
     public void Move (float HorizontalDirection, float VerticalDirection, bool jump)
     {
 
-        if (gameObject.GetComponent<CollisionTests>().DownSideCount == 4)
+
+        if (gameObject.GetComponent<CollisionTests>().MaxDownSideCount >= 4)
         {
+            //Debug.Break();
+            Debug.Log("Grounded");
+
             //Debug displayed when grounded
             Debug.DrawRay(transform.position, -transform.up * collider.bounds.size.y, Color.red);
             //Debug.Break(); 
@@ -142,7 +146,7 @@ public class Characters : MonoBehaviour {
                 MomentumOnJump = collider.GetComponent<Rigidbody>().velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
             }
 
-            gameObject.GetComponent<CollisionTests>().DownSideCount = 0; //TODO: Could work but... We actually can't jump with this line... Grounded is ok, but not jump.
+            //gameObject.GetComponent<CollisionTests>().DownSideCount = 0; //TODO: Could work but... We actually can't jump with this line... Grounded is ok, but not jump.
         }
         else
         {
