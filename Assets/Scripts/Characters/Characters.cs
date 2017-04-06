@@ -26,7 +26,6 @@ public class Characters : MonoBehaviour {
     float MomentumOnJump;
     private float airControlDir = 0;
     float previousTickHorizontalVelocity = 0f;
-    bool jumpedOnLastTick = false;
     #endregion
 
     #region Internal Components
@@ -47,6 +46,14 @@ public class Characters : MonoBehaviour {
         if (sharedVariables == null)
             Debug.LogError ("The scene is missing the CharacterSharedVariables class, please check your current GameObjects");
 	}
+
+    bool TouchingHead()
+    {
+        if (gameObject.GetComponent<CollisionTests>().MaxUpSideCount >= 4)
+            return true;
+        else
+            return false;
+    }
 
     bool TouchingWallOnLeft()
     {
@@ -101,19 +108,17 @@ public class Characters : MonoBehaviour {
 
             if (jump)
             {
-                //Debug.Break();
-                jumpedOnLastTick = true;
                 moveDirection.y = jumpStrength;
                 MomentumOnJump = thisCollider.GetComponent<Rigidbody>().velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
             }
         }
         else
         {
+            if (TouchingHead())
+                moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
+
             AirControl(HorizontalDirection);
             ApplyGravity();
-
-            if (jumpedOnLastTick)
-                jumpedOnLastTick = false;
         }
 
         //Cancelling directions if Pauline is pushing solid walls (Avoid glitches with jumps)
@@ -140,7 +145,6 @@ public class Characters : MonoBehaviour {
             MomentumOnJump = Mathf.Lerp(previousTickHorizontalVelocity, MomentumInfluenceBaseRate * speed, jumpMomentumInfluenceRate);
 
         moveDirection.x = MomentumOnJump;
-        jumpedOnLastTick = false;
         moveDirection.x = Mathf.Clamp(moveDirection.x, -speed, speed);
     }
 

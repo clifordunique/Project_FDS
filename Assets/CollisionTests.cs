@@ -164,7 +164,7 @@ public class CollisionTests : MonoBehaviour {
         }*/
 
         //Debug.Log("Up = " + MaxUpSideCount + " Down = " + MaxDownSideCount + " Left = " + MaxLeftSideCount + " Right = " + MaxRightSideCount);
-        Debug.Log("Diff Between highest and lowest collision = " + Mathf.Abs(yHighestDiff));
+        //Debug.Log("Diff Between highest and lowest collision = " + Mathf.Abs(yHighestDiff));
     }
 
     //If the collision is over, let's reset the maxCounts
