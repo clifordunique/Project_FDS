@@ -41,7 +41,7 @@ public class CollisionTests : MonoBehaviour {
 
     private void OnCollisionStay(Collision collision)
     {
-        Debug.Log("Collision Happening");
+        //Debug.Log("Collision Happening");
 
         int LeftSideCount = 0;
         int RightSideCount = 0;
@@ -52,7 +52,7 @@ public class CollisionTests : MonoBehaviour {
 
         foreach (ContactPoint contact in collision.contacts)
         {
-            //Debug.DrawLine(transform.position, contact.point, Color.blue);
+            Debug.DrawLine(transform.position, contact.point, Color.white);
             //Debug.DrawRay(contact.point, contact.normal * 2f, Color.red);
 
             if (contact.point.y >= thisCollider.bounds.max.y - colliderSkinWidth)

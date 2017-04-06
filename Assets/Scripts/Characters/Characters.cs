@@ -20,6 +20,8 @@ public class Characters : MonoBehaviour {
     Vector3 moveDirection;
     float MomentumOnJump;
     private float airControlDir = 0;
+    float previousTickHorizontalVelocity = 0f;
+    bool jumpedOnLastTick = false;
     #endregion
 
     #region Internal Components
@@ -84,15 +86,15 @@ public class Characters : MonoBehaviour {
         if (CheckIfGrounded())
         {
             //Debug displayed when grounded
-            Debug.DrawRay(transform.position, -transform.up * thisCollider.bounds.size.y, Color.red);
+            //Debug.DrawRay(transform.position, -transform.up * thisCollider.bounds.size.y, Color.red);
 
             moveDirection = new Vector3(HorizontalDirection, VerticalDirection);
-            moveDirection = transform.TransformDirection(moveDirection);
             moveDirection *= speed;
 
             if (jump)
             {
                 //Debug.Break();
+                jumpedOnLastTick = true;
                 moveDirection.y = jumpStrength;
                 MomentumOnJump = thisCollider.GetComponent<Rigidbody>().velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
             }
@@ -100,10 +102,11 @@ public class Characters : MonoBehaviour {
         else
         {
             AirControl(HorizontalDirection);
+            ApplyGravity();
+
+            if (jumpedOnLastTick)
+                jumpedOnLastTick = false;
         }
-
-
-        moveDirection.y -= 25 * Time.deltaTime; //TODO: Replace 25 by sharedVariables gravity var, which is fucked up for some reasons
 
         //Cancelling directions if Pauline is pushing solid walls (Avoid glitches with jumps)
         if ( (TouchingWallOnLeft() && moveDirection.x < 0) 
@@ -111,14 +114,25 @@ public class Characters : MonoBehaviour {
             moveDirection.x = 0;
 
         thisCollider.GetComponent<Rigidbody>().velocity = moveDirection;
+        //Debug.Log("Applied gravity is = " + thisCollider.GetComponent<Rigidbody>().velocity.y);
+        previousTickHorizontalVelocity = thisCollider.GetComponent<Rigidbody>().velocity.x;
+        Debug.Log(previousTickHorizontalVelocity);
+    }
+
+    void ApplyGravity ()
+    {
+        /*if ( (gameObject.GetComponent<CollisionTests>().MaxDownSideCount < 4 && gameObject.GetComponent<CollisionTests>().MaxLeftSideCount < 2)
+            || (gameObject.GetComponent<CollisionTests>().MaxDownSideCount < 4 && gameObject.GetComponent<CollisionTests>().MaxRightSideCount < 2))*/
+            moveDirection.y -= sharedVariables.Gravity * Time.deltaTime;
     }
 
     void AirControl (float MomentumInfluenceBaseRate)
     {
         if (MomentumInfluenceBaseRate != 0) //This check is to prevent the character to just stop the momentum in middle-air
-            MomentumOnJump = Mathf.Lerp(MomentumOnJump, MomentumInfluenceBaseRate * speed, jumpMomentumInfluenceRate);
+            MomentumOnJump = Mathf.Lerp(previousTickHorizontalVelocity, MomentumInfluenceBaseRate * speed, jumpMomentumInfluenceRate);
 
         moveDirection.x = MomentumOnJump;
+        jumpedOnLastTick = false;
         moveDirection.x = Mathf.Clamp(moveDirection.x, -speed, speed);
     }
 
