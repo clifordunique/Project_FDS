@@ -60,7 +60,10 @@ public class Characters : MonoBehaviour {
     bool CheckIfGrounded()
     {
         if (gameObject.GetComponent<CollisionTests>().MaxDownSideCount >= 4)
+        {
+            //Debug.Break();
             return true;
+        }
         else
             return false;
     }
@@ -89,6 +92,7 @@ public class Characters : MonoBehaviour {
 
             if (jump)
             {
+                //Debug.Break();
                 moveDirection.y = jumpStrength;
                 MomentumOnJump = thisCollider.GetComponent<Rigidbody>().velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
             }

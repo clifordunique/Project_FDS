@@ -25,7 +25,7 @@ public class CollisionTests : MonoBehaviour {
     Collider thisCollider;
     List <Collider> collidedObjects = new List<Collider>();
     List<ContactPointCounts> contactPointCounts = new List<ContactPointCounts>();
-    Dictionary<GameObject, ContactPointCounts> uniqueCollisions;
+    Dictionary<GameObject, ContactPointCounts> uniqueCollisions = new Dictionary<GameObject, ContactPointCounts>();
     public float colliderSkinWidth = .1f;
 
     public int MaxLeftSideCount = 0;
@@ -39,30 +39,21 @@ public class CollisionTests : MonoBehaviour {
         thisCollider = this.gameObject.GetComponent<Collider>();	
 	}
 
-    public void FixedUpdate ()
-    {
-        MaxLeftSideCount = 0;
-        MaxRightSideCount = 0;
-        MaxUpSideCount = 0;
-        MaxDownSideCount = 0;
-
-        collidedObjects.Clear();
-        contactPointCounts.Clear();
-    }
-
     private void OnCollisionStay(Collision collision)
     {
+        Debug.Log("Collision Happening");
+
         int LeftSideCount = 0;
         int RightSideCount = 0;
         int UpSideCount = 0;
         int DownSideCount = 0;
 
-        collidedObjects.Add(collision.collider);
+    collidedObjects.Add(collision.collider);
 
         foreach (ContactPoint contact in collision.contacts)
         {
-            Debug.DrawLine(transform.position, contact.point, Color.blue);
-            Debug.DrawRay(contact.point, contact.normal * 2f, Color.red);
+            //Debug.DrawLine(transform.position, contact.point, Color.blue);
+            //Debug.DrawRay(contact.point, contact.normal * 2f, Color.red);
 
             if (contact.point.y >= thisCollider.bounds.max.y - colliderSkinWidth)
             {
@@ -85,54 +76,68 @@ public class CollisionTests : MonoBehaviour {
             }
         }
 
-        if (!uniqueCollisions.ContainsKey (collision.collider.gameObject)) //TODO : NOT WORKING BITCH
+        if (!uniqueCollisions.ContainsKey (collision.gameObject))
         {
-            uniqueCollisions.Add(gameObject, new ContactPointCounts(UpSideCount, DownSideCount, LeftSideCount, RightSideCount));
+            uniqueCollisions.Add(collision.gameObject, new ContactPointCounts(UpSideCount, DownSideCount, LeftSideCount, RightSideCount));
         }
-
-        GetRealContactPointsCount();
-
-        Debug.Log("Up = " + MaxUpSideCount + " Down = " + MaxDownSideCount + " Left = " + MaxLeftSideCount + " Right = " + MaxRightSideCount);
-        //Debug.Break();
     }
 
-    void GetRealContactPointsCount ()
+    public void GetRealContactPointsCount ()
     {
+        MaxUpSideCount = 0;
+        MaxDownSideCount = 0;
+        MaxLeftSideCount = 0;
+        MaxRightSideCount = 0;
+
         int iterator = 0;
-        foreach (Collider collidedObject in collidedObjects)
+        foreach (KeyValuePair<GameObject,ContactPointCounts> collision in uniqueCollisions)
         {
-            if (contactPointCounts[iterator].UpSideCount > MaxUpSideCount)
+            if (collision.Value.UpSideCount > MaxUpSideCount)
             {
-                MaxUpSideCount = contactPointCounts[iterator].UpSideCount;
+                MaxUpSideCount = collision.Value.UpSideCount;
             }
 
-            if (contactPointCounts[iterator].DownSideCount > MaxDownSideCount)
+            if (collision.Value.DownSideCount > MaxDownSideCount)
             {
-                MaxDownSideCount = contactPointCounts[iterator].DownSideCount;
+                MaxDownSideCount = collision.Value.DownSideCount;
             }
 
-            if (contactPointCounts[iterator].LeftSideCount > MaxLeftSideCount)
+            if (collision.Value.LeftSideCount > MaxLeftSideCount)
             {
-                MaxLeftSideCount = contactPointCounts[iterator].LeftSideCount;
+                MaxLeftSideCount = collision.Value.LeftSideCount;
             }
 
-            if (contactPointCounts[iterator].RightSideCount > MaxRightSideCount)
+            if (collision.Value.RightSideCount > MaxRightSideCount)
             {
-                MaxRightSideCount = contactPointCounts[iterator].RightSideCount;
+                MaxRightSideCount = collision.Value.RightSideCount;
             }
 
             iterator++;
         }
+
+        //DEBUG
+        /*Debug.Log("Previous physic time tick collider count = " + uniqueCollisions.Count);
+
+        int debugIterator = 0;
+        foreach (KeyValuePair<GameObject, ContactPointCounts> collision in uniqueCollisions)
+        {
+            Debug.Log ("Collision " + debugIterator + " : Up " + collision.Value.UpSideCount + " : Down " + collision.Value.DownSideCount + " : Left " + collision.Value.LeftSideCount + " : Right " + collision.Value.RightSideCount);
+
+            iterator++;
+        }*/
+
+        //Debug.Log("Up = " + MaxUpSideCount + " Down = " + MaxDownSideCount + " Left = " + MaxLeftSideCount + " Right = " + MaxRightSideCount);
+
     }
 
     //If the collision is over, let's reset the maxCounts
     private void OnCollisionExit(Collision collision)
     {
-        Debug.Log("Exited collider = " + collision.collider);
+        //Debug.Log("Exited collider = " + collision.collider);
 
-        MaxLeftSideCount = 0;
-        MaxRightSideCount = 0;
-        MaxUpSideCount = 0;
-        MaxDownSideCount = 0;
+        if (uniqueCollisions.ContainsKey(collision.gameObject))
+        {
+            uniqueCollisions.Remove (collision.gameObject);
+        }
     }
 }

@@ -12,12 +12,11 @@ public class Player : Characters {
         collisionTests = gameObject.GetComponent<CollisionTests>();
     }
 
-    // TODO : Try to find the best between Update and FixedUpdate
-	void FixedUpdate ()
+    void FixedUpdate ()
     {
+        collisionTests.GetRealContactPointsCount();
         jump = Input.GetButtonDown("Jump");
         Move(Input.GetAxisRaw("Horizontal"), jump);
-
-        //collisionTests.ClearTests();
 	}
+
 }
