@@ -10,13 +10,17 @@ public class ContactPointCounts
     public int RightSideCount = 0;
     public int UpSideCount = 0;
     public int DownSideCount = 0;
+    public float yDiff = 0f;
+    public float xDiff = 0f;
 
-    public ContactPointCounts (int up, int down, int left, int right)
+    public ContactPointCounts (int up, int down, int left, int right, float diffBetweenHighestAndLowest, float diffBetweenLeftMostAndRightMost)
     {
         LeftSideCount = left;
         RightSideCount = right;
         UpSideCount = up;
         DownSideCount = down;
+        yDiff = diffBetweenHighestAndLowest;
+        xDiff = diffBetweenLeftMostAndRightMost;
     }
 }
 
@@ -32,6 +36,8 @@ public class CollisionTests : MonoBehaviour {
     public int MaxRightSideCount = 0;
     public int MaxUpSideCount = 0;
     public int MaxDownSideCount = 0;
+    public float yHighestDiff = 0f;
+    public float xHighestDiff = 0f;
 
     // Use this for initialization
     void Start ()
@@ -49,6 +55,12 @@ public class CollisionTests : MonoBehaviour {
         int DownSideCount = 0;
 
     collidedObjects.Add(collision.collider);
+
+
+        float highestContact = thisCollider.bounds.min.y;
+        float lowestContact = thisCollider.bounds.max.y;
+        float leftMostContact = thisCollider.bounds.max.x;
+        float rightMostContact = thisCollider.bounds.min.x;
 
         foreach (ContactPoint contact in collision.contacts)
         {
@@ -74,11 +86,27 @@ public class CollisionTests : MonoBehaviour {
             {
                 RightSideCount++;
             }
+
+            if (contact.point.y > highestContact)
+                highestContact = contact.point.y;
+
+            if (contact.point.y < lowestContact)
+                lowestContact = contact.point.y;
+
+            if (contact.point.x > rightMostContact)
+                rightMostContact = contact.point.x;
+
+            if (contact.point.x < leftMostContact)
+                leftMostContact = contact.point.x;
         }
+
+        float diffBetweenHighestAndLowest =  lowestContact - highestContact;
+        float diffBetweenLeftMostAndRightMost = leftMostContact - rightMostContact;
 
         if (!uniqueCollisions.ContainsKey (collision.gameObject))
         {
-            uniqueCollisions.Add(collision.gameObject, new ContactPointCounts(UpSideCount, DownSideCount, LeftSideCount, RightSideCount));
+            uniqueCollisions.Add(collision.gameObject, new ContactPointCounts(UpSideCount, DownSideCount, LeftSideCount, RightSideCount,
+                Mathf.Abs (diffBetweenHighestAndLowest), Mathf.Abs (diffBetweenLeftMostAndRightMost)));
         }
     }
 
@@ -88,6 +116,9 @@ public class CollisionTests : MonoBehaviour {
         MaxDownSideCount = 0;
         MaxLeftSideCount = 0;
         MaxRightSideCount = 0;
+        yHighestDiff = 0f;
+        xHighestDiff = 0f;
+
 
         int iterator = 0;
         foreach (KeyValuePair<GameObject,ContactPointCounts> collision in uniqueCollisions)
@@ -112,6 +143,12 @@ public class CollisionTests : MonoBehaviour {
                 MaxRightSideCount = collision.Value.RightSideCount;
             }
 
+            if (collision.Value.yDiff > yHighestDiff)
+                yHighestDiff = collision.Value.yDiff;
+
+            if (collision.Value.xDiff > xHighestDiff)
+                xHighestDiff = collision.Value.xDiff;
+
             iterator++;
         }
 
@@ -127,7 +164,7 @@ public class CollisionTests : MonoBehaviour {
         }*/
 
         //Debug.Log("Up = " + MaxUpSideCount + " Down = " + MaxDownSideCount + " Left = " + MaxLeftSideCount + " Right = " + MaxRightSideCount);
-
+        Debug.Log("Diff Between highest and lowest collision = " + Mathf.Abs(yHighestDiff));
     }
 
     //If the collision is over, let's reset the maxCounts

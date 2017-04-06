@@ -4,6 +4,9 @@ using UnityEngine;
 
 public class Characters : MonoBehaviour {
 
+    //TODO : Replace all the GetComponents into a single one for optimization
+
+
     #region Inspector Variables
     public float speed = 10;
     [SerializeField]
@@ -14,6 +17,8 @@ public class Characters : MonoBehaviour {
     float jumpSpeed = 50;
     [SerializeField]
     float groundTreshold = .1f;
+    [SerializeField]
+    float minimumWallSize = .1f;
     #endregion
 
     #region Moves Vars
@@ -45,7 +50,8 @@ public class Characters : MonoBehaviour {
 
     bool TouchingWallOnLeft()
     {
-        if (gameObject.GetComponent<CollisionTests>().MaxLeftSideCount >= 4)
+        if (gameObject.GetComponent<CollisionTests>().MaxLeftSideCount >= 4 && gameObject.GetComponent<CollisionTests>().yHighestDiff >= minimumWallSize)     
+            //TODO: Replace minimumWallSize with a percentage of Pauline's collider height for better control
             return true;
         else
             return false;
@@ -53,7 +59,8 @@ public class Characters : MonoBehaviour {
 
     bool TouchingWallOnRight()
     {
-        if (gameObject.GetComponent<CollisionTests>().MaxRightSideCount >= 4)
+        if (gameObject.GetComponent<CollisionTests>().MaxRightSideCount >= 4 && gameObject.GetComponent<CollisionTests>().yHighestDiff >= minimumWallSize)
+            //TODO: Replace minimumWallSize with a percentage of Pauline's collider height for better control
             return true;
         else
             return false;
@@ -61,7 +68,8 @@ public class Characters : MonoBehaviour {
 
     bool CheckIfGrounded()
     {
-        if (gameObject.GetComponent<CollisionTests>().MaxDownSideCount >= 4)
+        if (gameObject.GetComponent<CollisionTests>().MaxDownSideCount >= 4 && gameObject.GetComponent<CollisionTests>().xHighestDiff >= .01f)
+        //TODO: Replace the .01f to a percentage of Pauline's collider width, just in case we modify the collider's width and this gets broken
         {
             //Debug.Break();
             return true;
@@ -116,7 +124,7 @@ public class Characters : MonoBehaviour {
         thisCollider.GetComponent<Rigidbody>().velocity = moveDirection;
         //Debug.Log("Applied gravity is = " + thisCollider.GetComponent<Rigidbody>().velocity.y);
         previousTickHorizontalVelocity = thisCollider.GetComponent<Rigidbody>().velocity.x;
-        Debug.Log(previousTickHorizontalVelocity);
+        //Debug.Log(previousTickHorizontalVelocity);
     }
 
     void ApplyGravity ()
