@@ -19,6 +19,8 @@ public class Characters : MonoBehaviour {
     float groundTreshold = .1f;
     [SerializeField]
     float minimumWallSize = .1f;
+    [SerializeField]
+    float UTurnTiming = 0.5f;
     #endregion
 
     #region Moves Vars
@@ -126,10 +128,74 @@ public class Characters : MonoBehaviour {
             || (TouchingWallOnRight() && moveDirection.x > 0))
             moveDirection.x = 0;
 
+        //Adding some time for Pauline to do a U-turn more naturally
+        Brakes();
+
+        //Flipping sprite to face latest direction
+        if (previousTickHorizontalVelocity == 0f)
+        {
+            if (moveDirection.x < 0)
+                gameObject.GetComponent<SpriteRenderer>().flipX = true;
+            else if (moveDirection.x > 0)
+                gameObject.GetComponent<SpriteRenderer>().flipX = false;
+        }
+
         thisCollider.GetComponent<Rigidbody>().velocity = moveDirection;
         //Debug.Log("Applied gravity is = " + thisCollider.GetComponent<Rigidbody>().velocity.y);
         previousTickHorizontalVelocity = thisCollider.GetComponent<Rigidbody>().velocity.x;
         //Debug.Log(previousTickHorizontalVelocity);
+    }
+
+    bool braking = false;
+    float waitBeforeMove = 0f;
+    bool flipped = false;
+    List<float> velocityHistory = new List<float>();
+
+    void Brakes()
+    {
+        velocityHistory.Add(moveDirection.x);
+        if(Time.time > .1f)
+        {
+            Debug.Log("Velocity from .1 secondes = " + velocityHistory[0]);
+            velocityHistory.RemoveAt(0);
+        }
+
+        if (!braking)
+        {
+                if ((velocityHistory[0] > 0 && moveDirection.x < 0)
+                    || (velocityHistory[0] < 0 && moveDirection.x > 0))
+                {
+                    braking = true;
+                }
+        }
+        else
+        {
+            Debug.DrawRay(transform.position, transform.right * 5f, Color.blue);
+
+            if (!flipped)
+            {
+                if (gameObject.GetComponent<SpriteRenderer>().flipX)
+                    gameObject.GetComponent<SpriteRenderer>().flipX = false;
+                else
+                    gameObject.GetComponent<SpriteRenderer>().flipX = true;
+
+                flipped = true;
+            }
+
+            if (waitBeforeMove > .1f)
+            {
+                Debug.Log("BRAKE");
+
+                waitBeforeMove = 0f;
+                braking = false;
+                flipped = false;
+            }
+            else
+            {
+                moveDirection.x = 0;
+                waitBeforeMove += Time.deltaTime;
+            }
+        }
     }
 
     void ApplyGravity ()
