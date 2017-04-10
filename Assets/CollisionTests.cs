@@ -56,7 +56,17 @@ public class CollisionTests : MonoBehaviour {
         thisCollider = this.gameObject.GetComponent<Collider>();	
 	}
 
+    private void OnCollisionEnter(Collision collision)
+    {
+        UpdateCollision(collision);
+    }
+
     private void OnCollisionStay(Collision collision)
+    {
+        UpdateCollision(collision);
+    }
+
+    void UpdateCollision (Collision collision)
     {
         //Debug.Log("Collision Happening");
 
@@ -65,7 +75,7 @@ public class CollisionTests : MonoBehaviour {
         int UpSideCount = 0;
         int DownSideCount = 0;
 
-    collidedObjects.Add(collision.collider);
+        collidedObjects.Add(collision.collider);
 
 
         float highestContact = thisCollider.bounds.min.y;
@@ -111,15 +121,13 @@ public class CollisionTests : MonoBehaviour {
                 leftMostContact = contact.point.x;
         }
 
-
-
-
-
-        if (!uniqueCollisions.ContainsKey (collision.gameObject))
+        if (!uniqueCollisions.ContainsKey(collision.gameObject))
         {
             uniqueCollisions.Add(collision.gameObject, new ContactPointCounts(UpSideCount, DownSideCount, LeftSideCount, RightSideCount,
                 rightMostContact, leftMostContact, highestContact, lowestContact));
         }
+
+        GetRealContactPointsCount();
     }
 
     public void GetRealContactPointsCount ()
@@ -166,7 +174,7 @@ public class CollisionTests : MonoBehaviour {
             if (collision.Value._lowestY < _lowestContact)
                 _lowestContact = collision.Value._lowestY;
 
-            if (collision.Value._highestX < _leftMostContact)
+            if (collision.Value._lowestX < _leftMostContact)
                 _leftMostContact = collision.Value._lowestX;
 
             iterator++;
@@ -174,6 +182,9 @@ public class CollisionTests : MonoBehaviour {
 
         yHighestDiff = Mathf.Abs (_lowestContact - _highestContact);
         xHighestDiff = Mathf.Abs (_leftMostContact - _rightMostContact);
+
+        Debug.DrawLine(new Vector3(_leftMostContact, _highestContact, transform.position.z), new Vector3(_rightMostContact, _lowestContact, transform.position.z), Color.red);
+
 
         //DEBUG
         /*Debug.Log("Previous physic time tick collider count = " + uniqueCollisions.Count);

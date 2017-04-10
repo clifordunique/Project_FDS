@@ -86,11 +86,14 @@ public class Characters : MonoBehaviour {
         if (gameObject.GetComponent<CollisionTests>().MaxDownSideCount >= 4 && gameObject.GetComponent<CollisionTests>().xHighestDiff >= .01f)
         //TODO: Replace the .01f to a percentage of Pauline's collider width, just in case we modify the collider's width and this gets broken
         {
-            //Debug.Break();
+            Debug.Log("Grounded");
             return true;
         }
         else
+        {
+            //Debug.Log ("Not grounded because maxSideCount = " + gameObject.GetComponent<CollisionTests>().MaxDownSideCount " and xHighestDiff)
             return false;
+        }
     }
 
     public void Move (float HorizontalDirection)
