@@ -66,6 +66,12 @@ public class Characters : MonoBehaviour {
             return false;
     }
 
+    void TouchingSmallStep ()
+    {
+        transform.position += Vector3.up * gameObject.GetComponent<CollisionTests>().yHighestDiff;
+
+    }
+
     bool TouchingWallOnRight()
     {
         if (gameObject.GetComponent<CollisionTests>().MaxRightSideCount >= 4 && gameObject.GetComponent<CollisionTests>().yHighestDiff >= minimumWallSize)
@@ -120,13 +126,20 @@ public class Characters : MonoBehaviour {
                 moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
 
             AirControl(HorizontalDirection);
-            ApplyGravity();
+
         }
 
+        ApplyGravity();
+
         //Cancelling directions if Pauline is pushing solid walls (Avoid glitches with jumps)
-        if ( (TouchingWallOnLeft() && moveDirection.x < 0) 
+        if ((TouchingWallOnLeft() && moveDirection.x < 0)
             || (TouchingWallOnRight() && moveDirection.x > 0))
             moveDirection.x = 0;
+
+        if (gameObject.GetComponent<CollisionTests>().yHighestDiff < minimumWallSize && gameObject.GetComponent<CollisionTests>().yHighestDiff > .01f)
+            TouchingSmallStep();
+
+        Debug.Log("Highest Y Diff = " + gameObject.GetComponent<CollisionTests>().yHighestDiff);
 
         //Adding some time for Pauline to do a U-turn more naturally
         Brakes();
@@ -156,7 +169,7 @@ public class Characters : MonoBehaviour {
         velocityHistory.Add(moveDirection.x);
         if(Time.time > .1f)
         {
-            Debug.Log("Velocity from .1 secondes = " + velocityHistory[0]);
+            //Debug.Log("Velocity from .1 secondes = " + velocityHistory[0]);
             velocityHistory.RemoveAt(0);
         }
 
@@ -165,7 +178,8 @@ public class Characters : MonoBehaviour {
                 if ((velocityHistory[0] > 0 && moveDirection.x < 0)
                     || (velocityHistory[0] < 0 && moveDirection.x > 0))
                 {
-                    braking = true;
+                    if(CheckIfGrounded())
+                        braking = true;
                 }
         }
         else
@@ -184,7 +198,7 @@ public class Characters : MonoBehaviour {
 
             if (waitBeforeMove > .1f)
             {
-                Debug.Log("BRAKE");
+                //Debug.Log("BRAKE");
 
                 waitBeforeMove = 0f;
                 braking = false;
