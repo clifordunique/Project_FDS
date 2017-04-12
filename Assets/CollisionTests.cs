@@ -85,7 +85,7 @@ public class CollisionTests : MonoBehaviour {
 
         foreach (ContactPoint contact in collision.contacts)
         {
-            Debug.DrawLine(transform.position, contact.point, Color.white);
+            //Debug.DrawLine(transform.position, contact.point, Color.white);
             //Debug.DrawRay(contact.point, contact.normal * 2f, Color.red);
 
             if (contact.point.y >= thisCollider.bounds.min.y + (thisCollider.bounds.size.y * .9f))
@@ -186,21 +186,38 @@ public class CollisionTests : MonoBehaviour {
         yHighestDiff = Mathf.Abs (_lowestContact - _highestContact);
         xHighestDiff = Mathf.Abs (_leftMostContact - _rightMostContact);
 
-        //If the highest diff between the different contact points is too low, let's ignore it and make it as if the player is standing on the ground
-        if (yHighestDiff <= .1f)
+        //If the highest diff between the different contact points is too low, let's ignore it
+        if (yHighestDiff <= .05f)
         {
+            if (xHighestDiff <= .05f)
+            {
+                gameObject.GetComponent<Characters>().CornerStuck();
+            }
+
             MaxLeftSideCount = 0;
             MaxRightSideCount = 0;
+
+            /*_highestContact = thisCollider.bounds.min.y;
+            _lowestContact = thisCollider.bounds.max.y;
+
+            yHighestDiff = Mathf.Abs(_lowestContact - _highestContact);*/
         }
 
-        if (xHighestDiff <= .1f)
+        if (xHighestDiff <= .05f)
         {
-            MaxUpSideCount = 0;
-            MaxDownSideCount = 0;
+            MaxUpSideCount = 0; 
+            MaxDownSideCount = 0; //Better make it like it's actually grounded to avoid glitches on stairs...
+
+
+
+            /*_leftMostContact = thisCollider.bounds.max.x;
+            _rightMostContact = thisCollider.bounds.min.x;
+
+            xHighestDiff = Mathf.Abs(_leftMostContact - _rightMostContact);*/
         }
 
-        uniqueCollisions.Clear();
-        //TODO: LeftMost stay in place for some reasons...
+        uniqueCollisions.Clear(); //Let's make sure we have the most up to date datas by clearing the previous collisions that occured on this tick
+
         //Debug.Log("LeftMost = " + _leftMostContact);
         //Debug.Log("RightMost = " + _rightMostContact);
         //Debug.DrawLine(new Vector3(_leftMostContact, _highestContact, transform.position.z), new Vector3(_rightMostContact, _lowestContact, transform.position.z), Color.red);
@@ -221,7 +238,7 @@ public class CollisionTests : MonoBehaviour {
         //Debug.Log("Diff Between highest and lowest collision = " + Mathf.Abs(yHighestDiff));
     }
 
-    //If the collision is over, let's reset the maxCounts
+    //If a collision is over, let's remove it from the uniqueCollisions list
     private void OnCollisionExit(Collision collision)
     {
         //Debug.Log("Exited collider = " + collision.collider);

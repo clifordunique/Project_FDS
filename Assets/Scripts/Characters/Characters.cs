@@ -39,6 +39,51 @@ public class Characters : MonoBehaviour {
     CharactersSharedVariables sharedVariables;
     #endregion
 
+    #region experimental
+    public float stepMaxHeight;
+    public float stepLengthDetection = 1f;
+    float closeToStepPercent = 0f;
+    bool OnStep = false;
+    #endregion
+
+    void CheckStep ()
+    {
+        RaycastHit horizontalHit;
+        RaycastHit verticalHit;
+        Vector3 horizontalOrigin = new Vector3(thisCollider.bounds.min.x, thisCollider.bounds.min.y + .01f, transform.position.z);
+
+        if (Physics.Raycast(horizontalOrigin, -transform.right, out horizontalHit, stepLengthDetection))
+        {
+            //Debug.Log("Hit = " + horizontalHit.point);
+            //Debug.DrawLine(horizontalOrigin, horizontalHit.point, Color.red);
+            Vector3 verticalOrigin = new Vector3(horizontalHit.point.x, thisCollider.bounds.max.y - .01f, transform.position.z);
+
+            if (Physics.Raycast(verticalOrigin, -transform.up, out verticalHit, thisCollider.bounds.size.y))
+            {
+                //Debug.DrawLine(verticalOrigin, verticalHit.point, Color.red);
+
+                Vector3 stepEdge = new Vector3(horizontalHit.point.x, verticalHit.point.y, transform.position.z);
+                //Debug.DrawLine(transform.position, stepEdge, Color.red);
+                closeToStepPercent = Mathf.Abs(thisCollider.bounds.min.x - horizontalHit.point.x) / stepLengthDetection;
+                closeToStepPercent = Mathf.Abs(1 - closeToStepPercent);
+                Debug.Log("STAIRS OR STEP RIGHT AHEAD CAPTAIN =D " + closeToStepPercent);
+
+                float targetHeight = Mathf.Lerp(transform.position.y, verticalHit.point.y, closeToStepPercent);
+                //TODO: Well... It points downward for some fucking reasons, fix it.
+                //transform.position = new Vector3(transform.position.x, targetHeight, transform.position.z);
+                Debug.DrawLine(transform.position, new Vector3(transform.position.x, targetHeight, transform.position.z), Color.red);
+                OnStep = true;
+                Debug.Log(targetHeight);
+            }
+            else
+            {
+                OnStep = false;
+            }
+        }
+        else
+            OnStep = false;
+    }
+
     // Use this for initialization
     void Awake ()
     {
@@ -61,48 +106,49 @@ public class Characters : MonoBehaviour {
     {
         if (gameObject.GetComponent<CollisionTests>().MaxLeftSideCount >= 4)
         {
-            //TODO: Replace minimumWallSize with a percentage of Pauline's collider height for better control
-            Vector3 verticalRaycastOrigin = new Vector3(thisCollider.bounds.min.x - .05f, thisCollider.bounds.max.y, transform.position.z);
 
-
+            //The vertical cast will check the step's height
+            //The horizontal cast is there to double-check if the vertical cast origin point was inside a collider.
             RaycastHit verticalHit;
             RaycastHit horizontalHit;
-            Physics.Raycast(verticalRaycastOrigin, -transform.up, out verticalHit, Mathf.Infinity);
-            //TODO: bon ben apparemment OSEF, le point n'est toujours pas pris en compte DANS le collider donc...
-            //Serait-ce possible de vérifier que l'origine se trouve à l'intérieur d'un collider
 
-
+            Vector3 verticalRaycastOrigin = new Vector3(thisCollider.bounds.min.x - .05f, thisCollider.bounds.max.y, transform.position.z);
             Vector3 horizontalRaycastOrigin = new Vector3(thisCollider.bounds.max.x - .05f, thisCollider.bounds.max.y - .05f, transform.position.z);
             Vector3 horizontalRayCastDirection = verticalRaycastOrigin - horizontalRaycastOrigin;
             float horizontalRaycastDistance = horizontalRayCastDirection.magnitude;
 
-            Debug.DrawRay(horizontalRaycastOrigin, horizontalRayCastDirection * horizontalRaycastDistance, Color.blue);
+            //Raycasting the vertical cast
+            Physics.Raycast(verticalRaycastOrigin, -transform.up, out verticalHit, Mathf.Infinity);
+            //Debug.DrawRay(horizontalRaycastOrigin, horizontalRayCastDirection * horizontalRaycastDistance, Color.blue);
 
+            //If the horizontal cast hits something, then it is a wall, let's return true.
             if (Physics.Raycast(horizontalRaycastOrigin, horizontalRayCastDirection, out horizontalHit, horizontalRaycastDistance))
             {
                 Debug.Log("HorizontalHit = " + horizontalHit.collider.gameObject.name);
                 return true;
             }
+            //Else, it may be a step small enough for Pauline to climb it, let's check this
             else if (verticalHit.distance >= 1.5f && gameObject.GetComponent<CollisionTests>().xHighestDiff > .1f)
             {
-                Debug.Log("Not touching left wall because hit.distance = " + verticalHit.distance);
+                //Debug.Log("Not touching left wall because hit.distance = " + verticalHit.distance);
 
-                if (moveDirection.x < 0)
-                    TouchingSmallStep(verticalHit.distance - thisCollider.bounds.size.y);
+                //Yup, it was! If Pauline is moving, we make her climb the step right now
+                if (moveDirection.x != 0)
+                    ClimbSmallStep(verticalHit.distance - thisCollider.bounds.size.y);
 
                 return false;
             }
             else
                 return true;
         }
-        else
+        else //Not enough contact point on Pauline's side, so we return immediately false without any more verifications
         {
             Debug.Log("Not touching left wall because MaxLeftSideCount is " + gameObject.GetComponent<CollisionTests>().MaxLeftSideCount);
             return false;
         }
     }
 
-    void TouchingSmallStep (float stepHeight)
+    void ClimbSmallStep (float stepHeight)
     {
         transform.position += Vector3.up * (Mathf.Abs (stepHeight) + .05f);
     }
@@ -141,9 +187,19 @@ public class Characters : MonoBehaviour {
         Move(HorizontalDirection, 0, jump);
     }
 
+    public void CornerStuck ()
+    {
+        if (gameObject.GetComponent<CollisionTests>().MaxLeftSideCount >= 1)
+            transform.position = transform.position + transform.right * .01f;
+
+        Debug.Log("DESTUCKING OKER");
+    }
+
     //Main Move Method
     public void Move (float HorizontalDirection, float VerticalDirection, bool jump)
     {
+        CheckStep();
+
         if (CheckIfGrounded())
         {
             //Debug displayed when grounded
@@ -154,25 +210,25 @@ public class Characters : MonoBehaviour {
 
             if (jump)
             {
+                //Debug.Break();
                 moveDirection.y = jumpStrength;
                 MomentumOnJump = thisCollider.GetComponent<Rigidbody>().velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
             }
         }
         else
         {
-            if (TouchingHead())
+            /*if (TouchingHead())
                 moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
 
-            AirControl(HorizontalDirection);
-
+            AirControl(HorizontalDirection);*/
         }
 
         ApplyGravity();
 
         //Cancelling directions if Pauline is pushing solid walls (Avoid glitches with jumps)
-        if ((TouchingWallOnLeft() && moveDirection.x < 0)
+        /*if ((TouchingWallOnLeft() && moveDirection.x < 0)
             || (TouchingWallOnRight() && moveDirection.x > 0))
-            moveDirection.x = 0;
+            moveDirection.x = 0;*/ //TODO: Turn this back on when the step detection is finished
 
         //Debug.Log("Highest Y Diff = " + gameObject.GetComponent<CollisionTests>().yHighestDiff);
 
@@ -219,7 +275,7 @@ public class Characters : MonoBehaviour {
         }
         else
         {
-            Debug.DrawRay(transform.position, transform.right * 5f, Color.blue);
+            //Debug.DrawRay(transform.position, transform.right * 5f, Color.blue);
 
             if (!flipped)
             {
@@ -252,6 +308,8 @@ public class Characters : MonoBehaviour {
         /*if ( (gameObject.GetComponent<CollisionTests>().MaxDownSideCount < 4 && gameObject.GetComponent<CollisionTests>().MaxLeftSideCount < 2)
             || (gameObject.GetComponent<CollisionTests>().MaxDownSideCount < 4 && gameObject.GetComponent<CollisionTests>().MaxRightSideCount < 2))*/
             moveDirection.y -= sharedVariables.Gravity * Time.deltaTime;
+
+        Debug.Log("Gravity applied");
     }
 
     void AirControl (float MomentumInfluenceBaseRate)
