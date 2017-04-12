@@ -45,10 +45,10 @@ public class CollisionTests : MonoBehaviour {
     public float yHighestDiff = 0f;
     public float xHighestDiff = 0f;
 
-    float _highestContact;
-    float _lowestContact;
-    float _leftMostContact;
-    float _rightMostContact;
+    public float _highestContact;
+    public float _lowestContact;
+    public float _leftMostContact;
+    public float _rightMostContact;
 
     // Use this for initialization
     void Start ()
@@ -88,22 +88,22 @@ public class CollisionTests : MonoBehaviour {
             Debug.DrawLine(transform.position, contact.point, Color.white);
             //Debug.DrawRay(contact.point, contact.normal * 2f, Color.red);
 
-            if (contact.point.y >= thisCollider.bounds.max.y - colliderSkinWidth)
+            if (contact.point.y >= thisCollider.bounds.min.y + (thisCollider.bounds.size.y * .9f))
             {
                 UpSideCount++;
             }
 
-            if (contact.point.y <= thisCollider.bounds.min.y + colliderSkinWidth)
+            if (contact.point.y <= thisCollider.bounds.max.y - (thisCollider.bounds.size.y * .9f))
             {
                 DownSideCount++;
             }
 
-            if (contact.point.x <= thisCollider.bounds.min.x + colliderSkinWidth)
+            if (contact.point.x <= thisCollider.bounds.max.x - (thisCollider.bounds.size.x * .9f))
             {
                 LeftSideCount++;
             }
 
-            if (contact.point.x >= thisCollider.bounds.max.x - colliderSkinWidth)
+            if (contact.point.x >= thisCollider.bounds.min.x + (thisCollider.bounds.size.x * .9f))
             {
                 RightSideCount++;
             }
@@ -127,7 +127,8 @@ public class CollisionTests : MonoBehaviour {
                 rightMostContact, leftMostContact, highestContact, lowestContact));
         }
 
-        GetRealContactPointsCount();
+        //Debug.Log("This collision has " + LeftSideCount + " left points");
+        //GetRealContactPointsCount();
     }
 
     public void GetRealContactPointsCount ()
@@ -136,11 +137,13 @@ public class CollisionTests : MonoBehaviour {
         MaxDownSideCount = 0;
         MaxLeftSideCount = 0;
         MaxRightSideCount = 0;
+
         _highestContact = thisCollider.bounds.min.y;
         _lowestContact = thisCollider.bounds.max.y;
         _leftMostContact = thisCollider.bounds.max.x;
         _rightMostContact = thisCollider.bounds.min.x;
 
+        //Debug.Log("Collision happened in the latest tick = " + uniqueCollisions.Count);
 
         int iterator = 0;
         foreach (KeyValuePair<GameObject,ContactPointCounts> collision in uniqueCollisions)
@@ -183,7 +186,24 @@ public class CollisionTests : MonoBehaviour {
         yHighestDiff = Mathf.Abs (_lowestContact - _highestContact);
         xHighestDiff = Mathf.Abs (_leftMostContact - _rightMostContact);
 
-        Debug.DrawLine(new Vector3(_leftMostContact, _highestContact, transform.position.z), new Vector3(_rightMostContact, _lowestContact, transform.position.z), Color.red);
+        //If the highest diff between the different contact points is too low, let's ignore it and make it as if the player is standing on the ground
+        if (yHighestDiff <= .1f)
+        {
+            MaxLeftSideCount = 0;
+            MaxRightSideCount = 0;
+        }
+
+        if (xHighestDiff <= .1f)
+        {
+            MaxUpSideCount = 0;
+            MaxDownSideCount = 0;
+        }
+
+        uniqueCollisions.Clear();
+        //TODO: LeftMost stay in place for some reasons...
+        //Debug.Log("LeftMost = " + _leftMostContact);
+        //Debug.Log("RightMost = " + _rightMostContact);
+        //Debug.DrawLine(new Vector3(_leftMostContact, _highestContact, transform.position.z), new Vector3(_rightMostContact, _lowestContact, transform.position.z), Color.red);
 
 
         //DEBUG

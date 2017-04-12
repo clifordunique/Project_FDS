@@ -59,17 +59,52 @@ public class Characters : MonoBehaviour {
 
     bool TouchingWallOnLeft()
     {
-        if (gameObject.GetComponent<CollisionTests>().MaxLeftSideCount >= 4 && gameObject.GetComponent<CollisionTests>().yHighestDiff >= minimumWallSize)     
+        if (gameObject.GetComponent<CollisionTests>().MaxLeftSideCount >= 4)
+        {
             //TODO: Replace minimumWallSize with a percentage of Pauline's collider height for better control
-            return true;
+            Vector3 verticalRaycastOrigin = new Vector3(thisCollider.bounds.min.x - .05f, thisCollider.bounds.max.y, transform.position.z);
+
+
+            RaycastHit verticalHit;
+            RaycastHit horizontalHit;
+            Physics.Raycast(verticalRaycastOrigin, -transform.up, out verticalHit, Mathf.Infinity);
+            //TODO: bon ben apparemment OSEF, le point n'est toujours pas pris en compte DANS le collider donc...
+            //Serait-ce possible de vérifier que l'origine se trouve à l'intérieur d'un collider
+
+
+            Vector3 horizontalRaycastOrigin = new Vector3(thisCollider.bounds.max.x - .05f, thisCollider.bounds.max.y - .05f, transform.position.z);
+            Vector3 horizontalRayCastDirection = verticalRaycastOrigin - horizontalRaycastOrigin;
+            float horizontalRaycastDistance = horizontalRayCastDirection.magnitude;
+
+            Debug.DrawRay(horizontalRaycastOrigin, horizontalRayCastDirection * horizontalRaycastDistance, Color.blue);
+
+            if (Physics.Raycast(horizontalRaycastOrigin, horizontalRayCastDirection, out horizontalHit, horizontalRaycastDistance))
+            {
+                Debug.Log("HorizontalHit = " + horizontalHit.collider.gameObject.name);
+                return true;
+            }
+            else if (verticalHit.distance >= 1.5f && gameObject.GetComponent<CollisionTests>().xHighestDiff > .1f)
+            {
+                Debug.Log("Not touching left wall because hit.distance = " + verticalHit.distance);
+
+                if (moveDirection.x < 0)
+                    TouchingSmallStep(verticalHit.distance - thisCollider.bounds.size.y);
+
+                return false;
+            }
+            else
+                return true;
+        }
         else
+        {
+            Debug.Log("Not touching left wall because MaxLeftSideCount is " + gameObject.GetComponent<CollisionTests>().MaxLeftSideCount);
             return false;
+        }
     }
 
-    void TouchingSmallStep ()
+    void TouchingSmallStep (float stepHeight)
     {
-        transform.position += Vector3.up * gameObject.GetComponent<CollisionTests>().yHighestDiff;
-
+        transform.position += Vector3.up * (Mathf.Abs (stepHeight) + .05f);
     }
 
     bool TouchingWallOnRight()
@@ -139,10 +174,7 @@ public class Characters : MonoBehaviour {
             || (TouchingWallOnRight() && moveDirection.x > 0))
             moveDirection.x = 0;
 
-        if (gameObject.GetComponent<CollisionTests>().yHighestDiff < minimumWallSize && gameObject.GetComponent<CollisionTests>().yHighestDiff > .01f)
-            TouchingSmallStep();
-
-        Debug.Log("Highest Y Diff = " + gameObject.GetComponent<CollisionTests>().yHighestDiff);
+        //Debug.Log("Highest Y Diff = " + gameObject.GetComponent<CollisionTests>().yHighestDiff);
 
         //Adding some time for Pauline to do a U-turn more naturally
         Brakes();

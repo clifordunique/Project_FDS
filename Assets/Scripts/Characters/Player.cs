@@ -13,7 +13,7 @@ public class Player : Characters {
         collisionTests = gameObject.GetComponent<CollisionTests>();
     }
 
-    void FixedUpdate ()
+    void Update ()
     {
         collisionTests.GetRealContactPointsCount();
         jump = Input.GetButtonDown("Jump");
