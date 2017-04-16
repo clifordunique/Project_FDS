@@ -44,12 +44,14 @@ public class Characters : MonoBehaviour {
     public float stepLengthDetection = 1f;
     float closeToStepPercent = 0f;
     bool OnStep = false;
+    float groundPointForStep = 0f;
     #endregion
 
     void CheckStep ()
     {
         RaycastHit horizontalHit;
         RaycastHit verticalHit;
+        RaycastHit secondVerticalHit;
         Vector3 horizontalOrigin = new Vector3(thisCollider.bounds.min.x, thisCollider.bounds.min.y + .01f, transform.position.z);
 
         if (Physics.Raycast(horizontalOrigin, -transform.right, out horizontalHit, stepLengthDetection))
@@ -63,14 +65,23 @@ public class Characters : MonoBehaviour {
                 //Debug.DrawLine(verticalOrigin, verticalHit.point, Color.red);
 
                 Vector3 stepEdge = new Vector3(horizontalHit.point.x, verticalHit.point.y, transform.position.z);
-                //Debug.DrawLine(transform.position, stepEdge, Color.red);
+                Debug.DrawLine(transform.position, stepEdge, Color.red);
                 closeToStepPercent = Mathf.Abs(thisCollider.bounds.min.x - horizontalHit.point.x) / stepLengthDetection;
                 closeToStepPercent = Mathf.Abs(1 - closeToStepPercent);
                 Debug.Log("STAIRS OR STEP RIGHT AHEAD CAPTAIN =D " + closeToStepPercent);
+                Physics.IgnoreCollision(verticalHit.collider, thisCollider, true);
 
-                float targetHeight = Mathf.Lerp(transform.position.y, verticalHit.point.y, closeToStepPercent);
-                //TODO: Well... It points downward for some fucking reasons, fix it.
-                //transform.position = new Vector3(transform.position.x, targetHeight, transform.position.z);
+                Physics.Raycast(verticalOrigin + transform.right * .1f, -transform.up, out secondVerticalHit, Mathf.Infinity);
+                Debug.DrawLine(transform.position, secondVerticalHit.point, Color.blue);
+                float distanceBetweenStepAndGround = verticalHit.point.y - secondVerticalHit.point.y;
+                groundPointForStep = Mathf.Abs (distanceBetweenStepAndGround);
+
+
+
+                //Physics.Raycast (verticalOrigin);
+
+                float targetHeight = Mathf.Lerp(secondVerticalHit.point.y + thisCollider.bounds.size.y / 2,  verticalHit.point.y + groundPointForStep + thisCollider.bounds.size.y / 2, closeToStepPercent);
+                transform.position = new Vector3(transform.position.x, targetHeight, transform.position.z);
                 Debug.DrawLine(transform.position, new Vector3(transform.position.x, targetHeight, transform.position.z), Color.red);
                 OnStep = true;
                 Debug.Log(targetHeight);
@@ -164,7 +175,8 @@ public class Characters : MonoBehaviour {
 
     bool CheckIfGrounded()
     {
-        if (gameObject.GetComponent<CollisionTests>().MaxDownSideCount >= 4 && gameObject.GetComponent<CollisionTests>().xHighestDiff >= .01f)
+        if (gameObject.GetComponent<CollisionTests>().MaxDownSideCount >= 4 && gameObject.GetComponent<CollisionTests>().xHighestDiff >= .01f
+            || OnStep)
         //TODO: Replace the .01f to a percentage of Pauline's collider width, just in case we modify the collider's width and this gets broken
         {
             Debug.Log("Grounded");
@@ -217,10 +229,10 @@ public class Characters : MonoBehaviour {
         }
         else
         {
-            /*if (TouchingHead())
+            if (TouchingHead())
                 moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
 
-            AirControl(HorizontalDirection);*/
+            AirControl(HorizontalDirection);
         }
 
         ApplyGravity();
