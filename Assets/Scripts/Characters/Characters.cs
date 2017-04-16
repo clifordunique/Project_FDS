@@ -62,29 +62,34 @@ public class Characters : MonoBehaviour {
 
             if (Physics.Raycast(verticalOrigin, -transform.up, out verticalHit, thisCollider.bounds.size.y))
             {
-                //Debug.DrawLine(verticalOrigin, verticalHit.point, Color.red);
-
-                Vector3 stepEdge = new Vector3(horizontalHit.point.x, verticalHit.point.y, transform.position.z);
-                Debug.DrawLine(transform.position, stepEdge, Color.red);
-                closeToStepPercent = Mathf.Abs(thisCollider.bounds.min.x - horizontalHit.point.x) / stepLengthDetection;
-                closeToStepPercent = Mathf.Abs(1 - closeToStepPercent);
-                Debug.Log("STAIRS OR STEP RIGHT AHEAD CAPTAIN =D " + closeToStepPercent);
-                Physics.IgnoreCollision(verticalHit.collider, thisCollider, true);
-
                 Physics.Raycast(verticalOrigin + transform.right * .1f, -transform.up, out secondVerticalHit, Mathf.Infinity);
-                Debug.DrawLine(transform.position, secondVerticalHit.point, Color.blue);
                 float distanceBetweenStepAndGround = verticalHit.point.y - secondVerticalHit.point.y;
-                groundPointForStep = Mathf.Abs (distanceBetweenStepAndGround);
+
+                if (distanceBetweenStepAndGround <= stepMaxHeight)
+                {
+                    //Debug.DrawLine(verticalOrigin, verticalHit.point, Color.red);
+                    Vector3 stepEdge = new Vector3(horizontalHit.point.x, verticalHit.point.y, transform.position.z);
+                    Debug.DrawLine(transform.position, stepEdge, Color.red);
+                    closeToStepPercent = Mathf.Abs(thisCollider.bounds.min.x - horizontalHit.point.x) / stepLengthDetection;
+                    closeToStepPercent = Mathf.Abs(1 - closeToStepPercent);
+                    Debug.Log("STAIRS OR STEP RIGHT AHEAD CAPTAIN =D " + closeToStepPercent);
+                    Physics.IgnoreCollision(verticalHit.collider, thisCollider, true);
 
 
+                    Debug.DrawLine(transform.position, secondVerticalHit.point, Color.blue);
 
-                //Physics.Raycast (verticalOrigin);
+                    groundPointForStep = Mathf.Abs(distanceBetweenStepAndGround);
 
-                float targetHeight = Mathf.Lerp(secondVerticalHit.point.y + thisCollider.bounds.size.y / 2,  verticalHit.point.y + groundPointForStep + thisCollider.bounds.size.y / 2, closeToStepPercent);
-                transform.position = new Vector3(transform.position.x, targetHeight, transform.position.z);
-                Debug.DrawLine(transform.position, new Vector3(transform.position.x, targetHeight, transform.position.z), Color.red);
-                OnStep = true;
-                Debug.Log(targetHeight);
+                    //Physics.Raycast (verticalOrigin);
+
+                    float targetHeight = Mathf.Lerp(secondVerticalHit.point.y + thisCollider.bounds.size.y / 2, verticalHit.point.y + groundPointForStep + thisCollider.bounds.size.y / 2, closeToStepPercent);
+                    transform.position = new Vector3(transform.position.x, targetHeight, transform.position.z);
+                    Debug.DrawLine(transform.position, new Vector3(transform.position.x, targetHeight, transform.position.z), Color.red);
+                    OnStep = true;
+                    Debug.Log(targetHeight);
+                }
+                else
+                    OnStep = false;
             }
             else
             {
