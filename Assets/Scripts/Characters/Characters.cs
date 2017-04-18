@@ -45,6 +45,7 @@ public class Characters : MonoBehaviour {
     float closeToStepPercent = 0f;
     bool OnStep = false;
     float groundPointForStep = 0f;
+    List<Collider> ignoredColliders = new List<Collider>();
     #endregion
 
     void CheckStep ()
@@ -73,7 +74,9 @@ public class Characters : MonoBehaviour {
                     closeToStepPercent = Mathf.Abs(thisCollider.bounds.min.x - horizontalHit.point.x) / stepLengthDetection;
                     closeToStepPercent = Mathf.Abs(1 - closeToStepPercent);
                     Debug.Log("STAIRS OR STEP RIGHT AHEAD CAPTAIN =D " + closeToStepPercent);
+
                     Physics.IgnoreCollision(verticalHit.collider, thisCollider, true);
+                    ignoredColliders.Add(verticalHit.collider);
 
 
                     Debug.DrawLine(transform.position, secondVerticalHit.point, Color.blue);
@@ -98,6 +101,15 @@ public class Characters : MonoBehaviour {
         }
         else
             OnStep = false;
+
+        if (!OnStep)
+        {
+            foreach (Collider ignoredCollider in ignoredColliders)
+            {
+                Physics.IgnoreCollision(thisCollider, ignoredCollider, false);
+            }
+            ignoredColliders.Clear();
+        }
     }
 
     // Use this for initialization
