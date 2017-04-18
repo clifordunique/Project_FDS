@@ -53,18 +53,20 @@ public class Characters : MonoBehaviour {
         RaycastHit horizontalHit;
         RaycastHit verticalHit;
         RaycastHit secondVerticalHit;
-        Vector3 horizontalOrigin = new Vector3(thisCollider.bounds.min.x, thisCollider.bounds.min.y + .01f, transform.position.z);
+        Vector3 horizontalOrigin = new Vector3(thisCollider.bounds.min.x + .01f, thisCollider.bounds.min.y + .01f, transform.position.z);
 
         if (Physics.Raycast(horizontalOrigin, -transform.right, out horizontalHit, stepLengthDetection))
         {
             //Debug.Log("Hit = " + horizontalHit.point);
             //Debug.DrawLine(horizontalOrigin, horizontalHit.point, Color.red);
-            Vector3 verticalOrigin = new Vector3(horizontalHit.point.x, thisCollider.bounds.max.y - .01f, transform.position.z);
+            Vector3 verticalOrigin = new Vector3(horizontalHit.point.x - .01f, thisCollider.bounds.max.y - .05f, transform.position.z);
 
             if (Physics.Raycast(verticalOrigin, -transform.up, out verticalHit, thisCollider.bounds.size.y))
             {
                 Physics.Raycast(verticalOrigin + transform.right * .1f, -transform.up, out secondVerticalHit, Mathf.Infinity);
                 float distanceBetweenStepAndGround = verticalHit.point.y - secondVerticalHit.point.y;
+
+                Debug.DrawLine(verticalOrigin, verticalOrigin - transform.up * thisCollider.bounds.size.y);
 
                 if (distanceBetweenStepAndGround <= stepMaxHeight)
                 {
@@ -73,7 +75,7 @@ public class Characters : MonoBehaviour {
                     Debug.DrawLine(transform.position, stepEdge, Color.red);
                     closeToStepPercent = Mathf.Abs(thisCollider.bounds.min.x - horizontalHit.point.x) / stepLengthDetection;
                     closeToStepPercent = Mathf.Abs(1 - closeToStepPercent);
-                    Debug.Log("STAIRS OR STEP RIGHT AHEAD CAPTAIN =D " + closeToStepPercent);
+
 
                     Physics.IgnoreCollision(verticalHit.collider, thisCollider, true);
                     ignoredColliders.Add(verticalHit.collider);
@@ -83,13 +85,14 @@ public class Characters : MonoBehaviour {
 
                     groundPointForStep = Mathf.Abs(distanceBetweenStepAndGround);
 
+                    Debug.Log("Step ahead. Proximity percent = " + closeToStepPercent + ". Step height = " + groundPointForStep);
+
                     //Physics.Raycast (verticalOrigin);
 
                     float targetHeight = Mathf.Lerp(secondVerticalHit.point.y + thisCollider.bounds.size.y / 2, verticalHit.point.y + groundPointForStep + thisCollider.bounds.size.y / 2, closeToStepPercent);
                     transform.position = new Vector3(transform.position.x, targetHeight, transform.position.z);
                     Debug.DrawLine(transform.position, new Vector3(transform.position.x, targetHeight, transform.position.z), Color.red);
                     OnStep = true;
-                    Debug.Log(targetHeight);
                 }
                 else
                     OnStep = false;
