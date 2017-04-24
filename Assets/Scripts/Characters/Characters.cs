@@ -28,6 +28,7 @@ public class Characters : MonoBehaviour {
     float MomentumOnJump;
     private float airControlDir = 0;
     float previousTickHorizontalVelocity = 0f;
+    float previousTickVerticalVelocity = 0f;
     #endregion
 
     #region Internal Components
@@ -103,7 +104,7 @@ public class Characters : MonoBehaviour {
 
                 //Make sure the height we calculated before is a positive number, it'll come handy later.
                 currentStepHeight = Mathf.Abs(distanceBetweenStepAndGround);
-                Debug.Log("Step ahead. Proximity percent = " + closeToStepPercent + ". Step height = " + currentStepHeight);
+                //Debug.Log("Step ahead. Proximity percent = " + closeToStepPercent + ". Step height = " + currentStepHeight);
 
                 //Then, we use all those previous datas to calculate the new height for Pauline.
                 //To summarize, the closer Pauline will be to the step, the higher she'll need to be, so that it's like she's walking up a ramp.
@@ -205,19 +206,8 @@ public class Characters : MonoBehaviour {
                 Debug.Log("HorizontalHit = " + horizontalHit.collider.gameObject.name);
                 return true;
             }
-            //Else, it may be a step small enough for Pauline to climb it, let's check this
-            else if (verticalHit.distance >= 1.5f && gameObject.GetComponent<CollisionTests>().xHighestDiff > .1f)
-            {
-                //Debug.Log("Not touching left wall because hit.distance = " + verticalHit.distance);
-
-                //Yup, it was! If Pauline is moving, we make her climb the step right now
-                if (moveDirection.x != 0)
-                    ClimbSmallStep(verticalHit.distance - thisCollider.bounds.size.y);
-
-                return false;
-            }
             else
-                return true;
+                return false;
         }
         else //Not enough contact point on Pauline's side, so we return immediately false without any more verifications
         {
@@ -242,6 +232,9 @@ public class Characters : MonoBehaviour {
 
     bool CheckIfGrounded()
     {
+        if (moveDirection.y >= 0 && jumping)
+            return false;
+
         if (gameObject.GetComponent<CollisionTests>().MaxDownSideCount >= 4 && gameObject.GetComponent<CollisionTests>().xHighestDiff >= .01f
             || OnStep)
         //TODO: Replace the .01f to a percentage of Pauline's collider width, just in case we modify the collider's width and this gets broken
@@ -277,7 +270,13 @@ public class Characters : MonoBehaviour {
     //Main Move Method
     public void Move (float HorizontalDirection, float VerticalDirection, bool jump)
     {
-        CheckStep();
+
+
+        if (!jumping) //This line to make sure we won't get stuck on the stairs if we're jumping
+        {
+            CheckStep();
+            Debug.Log("Checking step");
+        }
 
         if (CheckIfGrounded())
         {
@@ -292,6 +291,7 @@ public class Characters : MonoBehaviour {
                 //Debug.Break();
                 moveDirection.y = jumpStrength;
                 MomentumOnJump = thisCollider.GetComponent<Rigidbody>().velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
+                jumping = true;
             }
         }
         else
@@ -299,10 +299,17 @@ public class Characters : MonoBehaviour {
             if (TouchingHead())
                 moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
 
+
+
             AirControl(HorizontalDirection);
         }
 
         ApplyGravity();
+
+        if (moveDirection.y <= 0 && jumping)
+            jumping = false;
+
+        Debug.Log(jumping);
 
         //Cancelling directions if Pauline is pushing solid walls (Avoid glitches with jumps)
         /*if ((TouchingWallOnLeft() && moveDirection.x < 0)
@@ -326,6 +333,7 @@ public class Characters : MonoBehaviour {
         thisCollider.GetComponent<Rigidbody>().velocity = moveDirection;
         //Debug.Log("Applied gravity is = " + thisCollider.GetComponent<Rigidbody>().velocity.y);
         previousTickHorizontalVelocity = thisCollider.GetComponent<Rigidbody>().velocity.x;
+        previousTickVerticalVelocity = thisCollider.GetComponent<Rigidbody>().velocity.y;
         //Debug.Log(previousTickHorizontalVelocity);
     }
 
@@ -333,6 +341,7 @@ public class Characters : MonoBehaviour {
     float waitBeforeMove = 0f;
     bool flipped = false;
     List<float> velocityHistory = new List<float>();
+    private bool jumping;
 
     void Brakes()
     {
@@ -388,7 +397,7 @@ public class Characters : MonoBehaviour {
             || (gameObject.GetComponent<CollisionTests>().MaxDownSideCount < 4 && gameObject.GetComponent<CollisionTests>().MaxRightSideCount < 2))*/
             moveDirection.y -= sharedVariables.Gravity * Time.deltaTime;
 
-        Debug.Log("Gravity applied");
+        //Debug.Log("Gravity applied");
     }
 
     void AirControl (float MomentumInfluenceBaseRate)
