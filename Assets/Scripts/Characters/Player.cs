@@ -9,7 +9,6 @@ public class Player : Characters {
 
     private void Start()
     {
-        //QualitySettings.vSyncCount = 0;
         collisionTests = gameObject.GetComponent<CollisionTests>();
     }
 

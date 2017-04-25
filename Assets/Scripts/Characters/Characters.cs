@@ -239,7 +239,7 @@ public class Characters : MonoBehaviour {
             || OnStep)
         //TODO: Replace the .01f to a percentage of Pauline's collider width, just in case we modify the collider's width and this gets broken
         {
-            Debug.Log("Grounded");
+            //Debug.Log("Grounded");
             return true;
         }
         else
@@ -275,7 +275,7 @@ public class Characters : MonoBehaviour {
         if (!jumping) //This line to make sure we won't get stuck on the stairs if we're jumping
         {
             CheckStep();
-            Debug.Log("Checking step");
+            //Debug.Log("Checking step");
         }
 
         if (CheckIfGrounded())
@@ -309,7 +309,7 @@ public class Characters : MonoBehaviour {
         if (moveDirection.y <= 0 && jumping)
             jumping = false;
 
-        Debug.Log(jumping);
+        //Debug.Log(jumping);
 
         //Cancelling directions if Pauline is pushing solid walls (Avoid glitches with jumps)
         /*if ((TouchingWallOnLeft() && moveDirection.x < 0)
