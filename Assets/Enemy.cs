@@ -13,6 +13,10 @@ public class Enemy : Characters {
     List<Transform> wayPoints = new List<Transform>();
     Transform currentWayPoint = null;
 
+    #region State Machine Vars
+    public bool PlayerInSight = false;
+    #endregion
+
     // Use this for initialization
     void Start ()
     {
@@ -55,7 +59,7 @@ public class Enemy : Characters {
 
         }
 
-        Debug.Log("Current WayPoint for " + transform.name + " is " + currentWayPoint.name);
+        //Debug.Log("Current WayPoint for " + transform.name + " is " + currentWayPoint.name);
     }
 
     private void OnTriggerEnter(Collider other)

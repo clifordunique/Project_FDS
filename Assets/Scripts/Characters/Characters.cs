@@ -47,6 +47,8 @@ public class Characters : MonoBehaviour {
     bool OnStep = false;
     float currentStepHeight = 0f;
     List<Collider> ignoredColliders = new List<Collider>();
+    [SerializeField]
+    LayerMask stepCheckIgnoredLayers;
     #endregion
 
     void VerticalCheckStep (RaycastHit horizontalHit, bool LeftCheck)
@@ -63,15 +65,15 @@ public class Characters : MonoBehaviour {
         else
             verticalOrigin = new Vector3(horizontalHit.point.x + .01f, thisCollider.bounds.max.y - .05f, transform.position.z);
 
-        if (Physics.Raycast(verticalOrigin, -transform.up, out verticalHit, thisCollider.bounds.size.y))
+        if (Physics.Raycast(verticalOrigin, -transform.up, out verticalHit, thisCollider.bounds.size.y, stepCheckIgnoredLayers))
         {
             //Okay, we hit something, but it can still be the ground... We'll have to measure the distance between what we just hit and what's on the other
             //side of the step (or whatever we just hit). If the distance is greater than the step max height we set up, then... We don't consider this as a step, and just give up.
 
             if(LeftCheck)
-                Physics.Raycast(verticalOrigin + transform.right * .1f, -transform.up, out secondVerticalHit, Mathf.Infinity);
+                Physics.Raycast(verticalOrigin + transform.right * .1f, -transform.up, out secondVerticalHit, Mathf.Infinity, stepCheckIgnoredLayers);
             else
-                Physics.Raycast(verticalOrigin - transform.right * .1f, -transform.up, out secondVerticalHit, Mathf.Infinity);
+                Physics.Raycast(verticalOrigin - transform.right * .1f, -transform.up, out secondVerticalHit, Mathf.Infinity, stepCheckIgnoredLayers);
 
             float distanceBetweenStepAndGround = verticalHit.point.y - secondVerticalHit.point.y;
 
@@ -136,7 +138,7 @@ public class Characters : MonoBehaviour {
         Vector3 horizontalLeftOrigin = new Vector3(thisCollider.bounds.min.x + .01f, thisCollider.bounds.min.y + .01f, transform.position.z);
 
         //There we go, let's check if there's something in front of Pauline's feet (left side)
-        if (Physics.Raycast(horizontalLeftOrigin, -transform.right, out horizontalHit, stepLengthDetection))
+        if (Physics.Raycast(horizontalLeftOrigin, -transform.right, out horizontalHit, stepLengthDetection, stepCheckIgnoredLayers))
         {
             VerticalCheckStep(horizontalHit, true);
         }
@@ -144,7 +146,7 @@ public class Characters : MonoBehaviour {
         {
             Vector3 horizontalRightOrigin = new Vector3(thisCollider.bounds.max.x - .01f, thisCollider.bounds.min.y + .01f, transform.position.z);
 
-            if (Physics.Raycast(horizontalRightOrigin, transform.right, out horizontalHit, stepLengthDetection))
+            if (Physics.Raycast(horizontalRightOrigin, transform.right, out horizontalHit, stepLengthDetection, stepCheckIgnoredLayers))
             {
                 VerticalCheckStep(horizontalHit, false);
             }
@@ -163,7 +165,7 @@ public class Characters : MonoBehaviour {
         }
         else
         {
-            Debug.Log(transform.name + "near step.");
+            //Debug.Log(transform.name + " near step.");
         }
     }
 
@@ -268,7 +270,7 @@ public class Characters : MonoBehaviour {
         if (gameObject.GetComponent<CollisionTests>().MaxLeftSideCount >= 1)
             transform.position = transform.position + transform.right * .01f;
 
-        Debug.Log("DESTUCKING OKER");
+        //Debug.Log("DESTUCKING OKER");
     }
 
     //Main Move Method
