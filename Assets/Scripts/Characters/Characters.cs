@@ -10,17 +10,17 @@ public class Characters : MonoBehaviour {
     #region Inspector Variables
     public float speed = 10;
     [SerializeField]
-    float jumpMomentumInfluenceRate;
+    float jumpMomentumInfluenceRate = .1f;
     [SerializeField]
-    float jumpStrength = 12;
+    float jumpStrength = 12f;
     [SerializeField]
-    float jumpSpeed = 50;
+    float jumpSpeed = 50f;
     [SerializeField]
     float groundTreshold = .1f;
     [SerializeField]
-    float minimumWallSize = .1f;
+    float minimumWallSize = .25f;
     [SerializeField]
-    float UTurnTiming = 0.5f;
+    float UTurnTiming = 0.1f;
     #endregion
 
     #region Moves Vars
@@ -41,8 +41,8 @@ public class Characters : MonoBehaviour {
     #endregion
 
     #region Stairs Detection
-    public float stepMaxHeight;
-    public float stepLengthDetection = 1f;
+    public float stepMaxHeight = .5f;
+    public float stepLengthDetection = .5f;
     float closeToStepPercent = 0f;
     bool OnStep = false;
     float currentStepHeight = 0f;
@@ -160,6 +160,10 @@ public class Characters : MonoBehaviour {
             }
 
             ignoredColliders.Clear();
+        }
+        else
+        {
+            Debug.Log(transform.name + "near step.");
         }
     }
 

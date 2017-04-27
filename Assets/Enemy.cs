@@ -72,7 +72,7 @@ public class Enemy : Characters {
         moveDirection = currentWayPoint.transform.position - transform.position;
         moveDirection = moveDirection.normalized;
 
-        Debug.Log("Patrol direction = " + moveDirection);
+        //Debug.Log("Patrol direction = " + moveDirection);
 
         Move(moveDirection.x, jump);
     }
