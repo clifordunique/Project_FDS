@@ -130,7 +130,7 @@ public class Characters : MonoBehaviour {
         }
     }
 
-    void CheckStep () //Checks if we're facing a step from a staircase that Pauline can climb easily
+    public void CheckStep () //Checks if we're facing a step from a staircase that Pauline can climb easily
     {
         RaycastHit horizontalHit;
 
@@ -245,14 +245,18 @@ public class Characters : MonoBehaviour {
             || OnStep)
         //TODO: Replace the .01f to a percentage of Pauline's collider width, just in case we modify the collider's width and this gets broken
         {
-            //Debug.Log("Grounded");
+            Debug.Log(transform.name + " is Grounded");
             return true;
         }
         else
         {
-            //Debug.Log ("Not grounded because maxSideCount = " + gameObject.GetComponent<CollisionTests>().MaxDownSideCount " and xHighestDiff)
             return false;
         }
+    }
+
+    void SlopeDetection ()
+    {
+
     }
 
     public void Move (float HorizontalDirection)
@@ -273,14 +277,17 @@ public class Characters : MonoBehaviour {
         //Debug.Log("DESTUCKING OKER");
     }
 
-    //Main Move Method
     public void Move (float HorizontalDirection, float VerticalDirection, bool jump)
     {
+        Move(HorizontalDirection, VerticalDirection, jump, false);
+    }
 
-
+    //Main Move Method
+    public void Move (float HorizontalDirection, float VerticalDirection, bool jump, bool dash)
+    {
         if (!jumping) //This line to make sure we won't get stuck on the stairs if we're jumping
         {
-            CheckStep();
+            //CheckStep(); //TODO: Replace with just... A slope... Sorry...
             //Debug.Log("Checking step");
         }
 
@@ -305,8 +312,6 @@ public class Characters : MonoBehaviour {
             if (TouchingHead())
                 moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
 
-
-
             AirControl(HorizontalDirection);
         }
 
@@ -314,13 +319,6 @@ public class Characters : MonoBehaviour {
 
         if (moveDirection.y <= 0 && jumping)
             jumping = false;
-
-        //Debug.Log(jumping);
-
-        //Cancelling directions if Pauline is pushing solid walls (Avoid glitches with jumps)
-        /*if ((TouchingWallOnLeft() && moveDirection.x < 0)
-            || (TouchingWallOnRight() && moveDirection.x > 0))
-            moveDirection.x = 0;*/ //TODO: Turn this back on when the step detection is finished
 
         //Debug.Log("Highest Y Diff = " + gameObject.GetComponent<CollisionTests>().yHighestDiff);
 
@@ -399,11 +397,7 @@ public class Characters : MonoBehaviour {
 
     void ApplyGravity ()
     {
-        /*if ( (gameObject.GetComponent<CollisionTests>().MaxDownSideCount < 4 && gameObject.GetComponent<CollisionTests>().MaxLeftSideCount < 2)
-            || (gameObject.GetComponent<CollisionTests>().MaxDownSideCount < 4 && gameObject.GetComponent<CollisionTests>().MaxRightSideCount < 2))*/
             moveDirection.y -= sharedVariables.Gravity * Time.deltaTime;
-
-        //Debug.Log("Gravity applied");
     }
 
     void AirControl (float MomentumInfluenceBaseRate)
