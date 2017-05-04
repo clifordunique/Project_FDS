@@ -45,10 +45,20 @@ public class Player : Characters {
             dashing = true;
 
             Debug.Log("Dashin'");
-            if (thisSprite.flipX)
-                dashDirection = -transform.right;
+            if (!OnSlope)
+            {
+                if (thisSprite.flipX)
+                    dashDirection = -transform.right;
+                else
+                    dashDirection = transform.right;
+            }
             else
-                dashDirection = transform.right;
+            {
+                if (thisSprite.flipX)
+                    dashDirection = slopeDirection;
+                else
+                    dashDirection = -slopeDirection;
+            }
 
             dashTimer += Time.deltaTime;
             thisRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;

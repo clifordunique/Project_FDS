@@ -49,6 +49,8 @@ public class Characters : MonoBehaviour {
     List<Collider> ignoredColliders = new List<Collider>();
     [SerializeField]
     LayerMask stepCheckIgnoredLayers;
+    public bool OnSlope = false;
+    public Vector3 slopeDirection;
     #endregion
 
     void VerticalCheckStep (RaycastHit horizontalHit, bool LeftCheck)
@@ -238,10 +240,10 @@ public class Characters : MonoBehaviour {
 
     bool CheckIfGrounded()
     {
+        if (OnSlope)
+            return true;
 
-
-
-                if (moveDirection.y >= 0 && jumping)
+        if (moveDirection.y >= 0 && jumping)
             return false;
 
         if (gameObject.GetComponent<CollisionTests>().MaxDownSideCount >= 4 && gameObject.GetComponent<CollisionTests>().xHighestDiff >= .01f
@@ -253,14 +255,12 @@ public class Characters : MonoBehaviour {
         }
         else
         {
-
             return false;
         }
     }
 
     void SlopeDetection (float InputHorizontalDirection)
     {
-
         //moveDirection = Vector3.zero;
         /*float magnitude = moveDirection.magnitude;
 
@@ -301,59 +301,67 @@ public class Characters : MonoBehaviour {
 
     //Main Move Method
     public void Move (float HorizontalDirection, float VerticalDirection, bool jump, bool dash)
-    {
-
+    { 
+        //TODO : Factorize all this in SlopeDetection Method
         Vector3 ray = -transform.up * .1f;
-        Debug.DrawRay(thisCollider.bounds.min, ray, Color.cyan);
-        RaycastHit hit;
-        Ray rayVar = new Ray(thisCollider.bounds.min, -transform.up);
 
+        RaycastHit hit = new RaycastHit();
+        List<Ray> rayVar = new List<Ray>();
+        rayVar.Add (new Ray(thisCollider.bounds.min, -transform.up));
+        rayVar.Add(new Ray(new Vector3 (thisCollider.bounds.max.x, thisCollider.bounds.min.y, transform.position.z), -transform.up));
 
-
-        if (Physics.Raycast(rayVar, out hit, .5f))
+        foreach (Ray singleRay in rayVar)
         {
-            float NormalAngle = Vector3.Angle(transform.right, hit.normal);
-            if (Mathf.Abs(NormalAngle - 90) > .1f && Mathf.Abs(NormalAngle) > .1f && Mathf.Abs(NormalAngle - 180) > .1f)
+            if (Physics.Raycast(singleRay, out hit, Mathf.Infinity))
             {
-                Debug.Log("ON SLOPE BUT FOR REAL THIS TIME");
-            }
-        }
-
-        if (!gameObject.GetComponent<CollisionTests>().OnSlope)
-        {
-            if (CheckIfGrounded())
-            {
-                //Debug displayed when grounded
-                //Debug.DrawRay(transform.position, -transform.up * thisCollider.bounds.size.y, Color.red);
-
-                moveDirection = new Vector3(HorizontalDirection, VerticalDirection);
-                moveDirection *= speed;
-
-                if (jump)
+                if (hit.distance < .1f)
                 {
-                    //Debug.Break();
-                    moveDirection.y = jumpStrength;
-                    MomentumOnJump = thisCollider.GetComponent<Rigidbody>().velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
-                    jumping = true;
+                    float NormalAngle = Vector3.Angle(transform.right, hit.normal);
+                    if (Mathf.Abs(NormalAngle - 90) > .1f && Mathf.Abs(NormalAngle) > .1f && Mathf.Abs(NormalAngle - 180) > .1f)
+                    {
+                        Debug.Log("ON SLOPE BUT FOR REAL THIS TIME");
+                        OnSlope = true;
+                        break;
+                        //Debug.DrawRay(transform.position, hit.normal * 5f, Color.red);
+                    }
+                    else
+                        OnSlope = false;
                 }
+                else
+                    OnSlope = false;
             }
             else
-            {
-                Debug.Log("In air");
-                if (TouchingHead())
-                    moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
-
-                AirControl(HorizontalDirection);
-            }
-
-            ApplyGravity();
+                OnSlope = false;
         }
-        else //If we're on a slope
+
+        if (CheckIfGrounded())
         {
+            //Debug displayed when grounded
+            //Debug.DrawRay(transform.position, -transform.up * thisCollider.bounds.size.y, Color.red);
 
+            moveDirection = new Vector3(HorizontalDirection, VerticalDirection);
+            moveDirection *= speed;
 
-            SlopeDetection(HorizontalDirection);
+            if (jump)
+            {
+                //Debug.Break();
+                OnSlope = false;
+                moveDirection.y = jumpStrength;
+                MomentumOnJump = thisCollider.GetComponent<Rigidbody>().velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
+                jumping = true;
+            }
         }
+        else
+        {
+            ApplyGravity();
+
+            Debug.Log("In air");
+            if (TouchingHead())
+                moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
+
+            AirControl(HorizontalDirection);
+        }
+
 
         if (moveDirection.y <= 0 && jumping)
             jumping = false;
@@ -373,9 +381,24 @@ public class Characters : MonoBehaviour {
                 gameObject.GetComponent<SpriteRenderer>().flipX = false;
         }
 
-        Debug.DrawRay(transform.position, moveDirection, Color.blue);
+
+
+        /*if (OnSlope)
+            moveDirection.y = hit.normal.y;*/
+        if (OnSlope)
+        {
+            slopeDirection = new Vector3(-hit.normal.y, hit.normal.x, 0f) / Mathf.Sqrt((hit.normal.x * hit.normal.x) + (hit.normal.y * hit.normal.y));
+
+            if (HorizontalDirection < 0)
+                moveDirection = slopeDirection * speed;
+            else if (HorizontalDirection > 0)
+                moveDirection = -slopeDirection * speed;
+        }
 
         thisCollider.GetComponent<Rigidbody>().velocity = moveDirection;
+
+        Debug.DrawRay(transform.position, thisCollider.GetComponent<Rigidbody>().velocity, Color.blue);
+
         //Debug.Log("Applied gravity is = " + thisCollider.GetComponent<Rigidbody>().velocity.y);
         previousTickHorizontalVelocity = thisCollider.GetComponent<Rigidbody>().velocity.x;
         previousTickVerticalVelocity = thisCollider.GetComponent<Rigidbody>().velocity.y;

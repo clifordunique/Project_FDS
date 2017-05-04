@@ -50,9 +50,6 @@ public class CollisionTests : MonoBehaviour {
     public float _leftMostContact;
     public float _rightMostContact;
 
-    public bool OnSlope = false;
-    public Vector3 SlopeNormal = Vector3.zero;
-
     // Use this for initialization
     void Start ()
     {
@@ -86,8 +83,6 @@ public class CollisionTests : MonoBehaviour {
         float leftMostContact = thisCollider.bounds.max.x;
         float rightMostContact = thisCollider.bounds.min.x;
 
-        OnSlope = false;
-
         foreach (ContactPoint contact in collision.contacts)
         {
             //Debug.DrawLine(transform.position, contact.point, Color.white);
@@ -111,20 +106,6 @@ public class CollisionTests : MonoBehaviour {
             if (contact.point.y <= thisCollider.bounds.max.y - (thisCollider.bounds.size.y * .9f))
             {
                 DownSideCount++;
-
-                float NormalAngle = Vector3.Angle(transform.right, contact.normal);
-
-                if (Mathf.Abs (NormalAngle - 90) > .1f && Mathf.Abs (NormalAngle) > .1f && Mathf.Abs (NormalAngle - 180) > .1f)
-                {
-                    Debug.Log("ON SLOPE with angle = " + NormalAngle); //TODO: Always detecting a slope even if not on a slope, lol
-                    OnSlope = true;
-                    SlopeNormal = contact.normal;
-                }
-                else
-                {
-                    Debug.Log("NOT ON SLOPE");
-                }
-
             }
 
             if (contact.point.x <= thisCollider.bounds.max.x - (thisCollider.bounds.size.x * .9f))
@@ -269,7 +250,6 @@ public class CollisionTests : MonoBehaviour {
     private void OnCollisionExit(Collision collision)
     {
         //Debug.Log("Exited collider = " + collision.collider);
-        OnSlope = false;
         if (uniqueCollisions.ContainsKey(collision.gameObject))
         {
             uniqueCollisions.Remove (collision.gameObject);
