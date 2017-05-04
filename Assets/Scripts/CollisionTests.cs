@@ -50,6 +50,9 @@ public class CollisionTests : MonoBehaviour {
     public float _leftMostContact;
     public float _rightMostContact;
 
+    public bool OnSlope = false;
+    public Vector3 SlopeNormal = Vector3.zero;
+
     // Use this for initialization
     void Start ()
     {
@@ -83,19 +86,45 @@ public class CollisionTests : MonoBehaviour {
         float leftMostContact = thisCollider.bounds.max.x;
         float rightMostContact = thisCollider.bounds.min.x;
 
+        OnSlope = false;
+
         foreach (ContactPoint contact in collision.contacts)
         {
-            Debug.DrawLine(transform.position, contact.point, Color.white);
+            //Debug.DrawLine(transform.position, contact.point, Color.white);
             //Debug.DrawRay(contact.point, contact.normal * 2f, Color.red);
+
+
+            //TODO : Let's check all the normals, if one normal is different than 180 or 90 degrees, it must mean we're on a slope...
+            Debug.Log(contact.normal);
+            //Debug.DrawRay(contact.point, contact.normal, Color.red);
+
+
+
 
             if (contact.point.y >= thisCollider.bounds.min.y + (thisCollider.bounds.size.y * .9f))
             {
                 UpSideCount++;
             }
 
+            //While checking for the down side of the boundaries, let's check the normal of the contact points.
+            //This is to detect if Pauline is standing on a slope.
             if (contact.point.y <= thisCollider.bounds.max.y - (thisCollider.bounds.size.y * .9f))
             {
                 DownSideCount++;
+
+                float NormalAngle = Vector3.Angle(transform.right, contact.normal);
+
+                if (Mathf.Abs (NormalAngle - 90) > .1f && Mathf.Abs (NormalAngle) > .1f && Mathf.Abs (NormalAngle - 180) > .1f)
+                {
+                    Debug.Log("ON SLOPE with angle = " + NormalAngle); //TODO: Always detecting a slope even if not on a slope, lol
+                    OnSlope = true;
+                    SlopeNormal = contact.normal;
+                }
+                else
+                {
+                    Debug.Log("NOT ON SLOPE");
+                }
+
             }
 
             if (contact.point.x <= thisCollider.bounds.max.x - (thisCollider.bounds.size.x * .9f))
@@ -186,7 +215,7 @@ public class CollisionTests : MonoBehaviour {
         yHighestDiff = Mathf.Abs (_lowestContact - _highestContact);
         xHighestDiff = Mathf.Abs (_leftMostContact - _rightMostContact);
 
-        //If the highest diff between the different contact points is too low, let's ignore it
+        //If the highest diff between the different contact points is too low, let's ignore it. EXCEPT if this is a slope.
         if (yHighestDiff <= .05f)
         {
             if (xHighestDiff <= .05f)
@@ -207,8 +236,6 @@ public class CollisionTests : MonoBehaviour {
         {
             MaxUpSideCount = 0; 
             MaxDownSideCount = 0; //Better make it like it's actually grounded to avoid glitches on stairs...
-
-
 
             /*_leftMostContact = thisCollider.bounds.max.x;
             _rightMostContact = thisCollider.bounds.min.x;
@@ -242,7 +269,7 @@ public class CollisionTests : MonoBehaviour {
     private void OnCollisionExit(Collision collision)
     {
         //Debug.Log("Exited collider = " + collision.collider);
-
+        OnSlope = false;
         if (uniqueCollisions.ContainsKey(collision.gameObject))
         {
             uniqueCollisions.Remove (collision.gameObject);

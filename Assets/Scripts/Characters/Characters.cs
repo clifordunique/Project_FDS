@@ -77,7 +77,7 @@ public class Characters : MonoBehaviour {
 
             float distanceBetweenStepAndGround = verticalHit.point.y - secondVerticalHit.point.y;
 
-            Debug.DrawLine(verticalOrigin, verticalOrigin - transform.up * thisCollider.bounds.size.y);
+            //Debug.DrawLine(verticalOrigin, verticalOrigin - transform.up * thisCollider.bounds.size.y);
 
             //So if the distance we just measured is below the stepMaxHeight we set up...
             if (distanceBetweenStepAndGround <= stepMaxHeight)
@@ -86,7 +86,7 @@ public class Characters : MonoBehaviour {
 
                 //The next to line are just used for debugging purpose...
                 Vector3 stepEdge = new Vector3(horizontalHit.point.x, verticalHit.point.y, transform.position.z);
-                Debug.DrawLine(transform.position, stepEdge, Color.red);
+                //Debug.DrawLine(transform.position, stepEdge, Color.red);
 
                 //All right, now we have to calculate the percentage of proximity between Pauline and the step, so we can calculate how high she'll need to be.
                 if(LeftCheck)
@@ -102,7 +102,7 @@ public class Characters : MonoBehaviour {
                                                             //sure the physic engine will get to work on those stairs again. 
 
 
-                Debug.DrawLine(transform.position, secondVerticalHit.point, Color.blue);
+                //Debug.DrawLine(transform.position, secondVerticalHit.point, Color.blue);
 
                 //Make sure the height we calculated before is a positive number, it'll come handy later.
                 currentStepHeight = Mathf.Abs(distanceBetweenStepAndGround);
@@ -114,7 +114,7 @@ public class Characters : MonoBehaviour {
 
                 //Then let's apply all this directly to the transform component
                 transform.position = new Vector3(transform.position.x, targetHeight, transform.position.z);
-                Debug.DrawLine(transform.position, new Vector3(transform.position.x, targetHeight, transform.position.z), Color.red);
+                //Debug.DrawLine(transform.position, new Vector3(transform.position.x, targetHeight, transform.position.z), Color.red);
 
                 //And flag the global bool OnStep to true, so that we can apply some exceptions to Pauline's moves
                 //(Like overriding the fact she's grounded even if technically, her collider can't detect anything below her feet as we deactivated the
@@ -238,7 +238,10 @@ public class Characters : MonoBehaviour {
 
     bool CheckIfGrounded()
     {
-        if (moveDirection.y >= 0 && jumping)
+
+
+
+                if (moveDirection.y >= 0 && jumping)
             return false;
 
         if (gameObject.GetComponent<CollisionTests>().MaxDownSideCount >= 4 && gameObject.GetComponent<CollisionTests>().xHighestDiff >= .01f
@@ -250,13 +253,27 @@ public class Characters : MonoBehaviour {
         }
         else
         {
+
             return false;
         }
     }
 
-    void SlopeDetection ()
+    void SlopeDetection (float InputHorizontalDirection)
     {
 
+        //moveDirection = Vector3.zero;
+        /*float magnitude = moveDirection.magnitude;
+
+        if (InputHorizontalDirection < 0)
+        {
+            moveDirection.x = -thisCollider.GetComponent<CollisionTests>().SlopeNormal.x;
+            moveDirection.y = -thisCollider.GetComponent<CollisionTests>().SlopeNormal.y;
+            moveDirection *= InputHorizontalDirection;
+        }
+        else
+        {
+            moveDirection = Vector3.zero;
+        }*/
     }
 
     public void Move (float HorizontalDirection)
@@ -285,42 +302,64 @@ public class Characters : MonoBehaviour {
     //Main Move Method
     public void Move (float HorizontalDirection, float VerticalDirection, bool jump, bool dash)
     {
-        if (!jumping) //This line to make sure we won't get stuck on the stairs if we're jumping
+
+        Vector3 ray = -transform.up * .1f;
+        Debug.DrawRay(thisCollider.bounds.min, ray, Color.cyan);
+        RaycastHit hit;
+        Ray rayVar = new Ray(thisCollider.bounds.min, -transform.up);
+
+
+
+        if (Physics.Raycast(rayVar, out hit, .5f))
         {
-            //CheckStep(); //TODO: Replace with just... A slope... Sorry...
-            //Debug.Log("Checking step");
-        }
-
-        if (CheckIfGrounded())
-        {
-            //Debug displayed when grounded
-            //Debug.DrawRay(transform.position, -transform.up * thisCollider.bounds.size.y, Color.red);
-
-            moveDirection = new Vector3(HorizontalDirection, VerticalDirection);
-            moveDirection *= speed;
-
-            if (jump)
+            float NormalAngle = Vector3.Angle(transform.right, hit.normal);
+            if (Mathf.Abs(NormalAngle - 90) > .1f && Mathf.Abs(NormalAngle) > .1f && Mathf.Abs(NormalAngle - 180) > .1f)
             {
-                //Debug.Break();
-                moveDirection.y = jumpStrength;
-                MomentumOnJump = thisCollider.GetComponent<Rigidbody>().velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
-                jumping = true;
+                Debug.Log("ON SLOPE BUT FOR REAL THIS TIME");
             }
         }
-        else
+
+        if (!gameObject.GetComponent<CollisionTests>().OnSlope)
         {
-            if (TouchingHead())
-                moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
+            if (CheckIfGrounded())
+            {
+                //Debug displayed when grounded
+                //Debug.DrawRay(transform.position, -transform.up * thisCollider.bounds.size.y, Color.red);
 
-            AirControl(HorizontalDirection);
+                moveDirection = new Vector3(HorizontalDirection, VerticalDirection);
+                moveDirection *= speed;
+
+                if (jump)
+                {
+                    //Debug.Break();
+                    moveDirection.y = jumpStrength;
+                    MomentumOnJump = thisCollider.GetComponent<Rigidbody>().velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
+                    jumping = true;
+                }
+            }
+            else
+            {
+                Debug.Log("In air");
+                if (TouchingHead())
+                    moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
+
+                AirControl(HorizontalDirection);
+            }
+
+            ApplyGravity();
         }
+        else //If we're on a slope
+        {
 
-        ApplyGravity();
+
+            SlopeDetection(HorizontalDirection);
+        }
 
         if (moveDirection.y <= 0 && jumping)
             jumping = false;
 
         //Debug.Log("Highest Y Diff = " + gameObject.GetComponent<CollisionTests>().yHighestDiff);
+
 
         //Adding some time for Pauline to do a U-turn more naturally
         Brakes();
@@ -333,6 +372,8 @@ public class Characters : MonoBehaviour {
             else if (moveDirection.x > 0)
                 gameObject.GetComponent<SpriteRenderer>().flipX = false;
         }
+
+        Debug.DrawRay(transform.position, moveDirection, Color.blue);
 
         thisCollider.GetComponent<Rigidbody>().velocity = moveDirection;
         //Debug.Log("Applied gravity is = " + thisCollider.GetComponent<Rigidbody>().velocity.y);

@@ -14,11 +14,13 @@ public class Player : Characters {
     CollisionTests collisionTests;
     Vector3 dashDirection;
     SpriteRenderer thisSprite;
+    Rigidbody thisRigidbody;
 
     private void Start()
     {
         collisionTests = gameObject.GetComponent<CollisionTests>();
         thisSprite = gameObject.GetComponent<SpriteRenderer>();
+        thisRigidbody = gameObject.GetComponent<Rigidbody>();
     }
 
     void FixedUpdate ()
@@ -49,12 +51,14 @@ public class Player : Characters {
                 dashDirection = transform.right;
 
             dashTimer += Time.deltaTime;
+            thisRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
-            CheckStep();
+            //CheckStep();
         }
         else
         {
             dashing = false;
+            thisRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
             dashTimer = 0f;
         }
 
