@@ -54,9 +54,7 @@ public class Enemy : Characters {
             {
                 currentWayPoint = wayPoints[0];
             }
-
         }
-
         //Debug.Log("Current WayPoint for " + transform.name + " is " + currentWayPoint.name);
     }
 

@@ -9,18 +9,30 @@ public class Player : Characters {
         float dashDuration = 1f;
         [SerializeField]
         float dashSpeed = 10f;
+        [SerializeField]
+        float dashCoolDown = .5f;
+        [HideInInspector]
+        bool alreadyDashedInAir = false;
     #endregion
 
     #region moves States
         bool jump = false;
+        [HideInInspector]
+        public GameObject dashAttachment = null;
+        [HideInInspector]
+        public List<Collider> attachmentColliders = new List<Collider>();
 
-        bool dashing = false;
+        //Dash state vars
+        [HideInInspector]
+        public bool dashing = false;
         float dashTimer = 0f;
+        float dashCoolDownTimer = 0f;
         Vector3 dashDirection;
     #endregion
 
     private void Start()
     {
+        dashCoolDownTimer = dashCoolDown;
     }
 
     void FixedUpdate ()
@@ -28,51 +40,96 @@ public class Player : Characters {
         collisionTests.GetRealContactPointsCount();
         jump = Input.GetButtonDown("Jump");
 
-        if(!dashing)
+        if (!dashing && dashAttachment == null)
             Move(Input.GetAxisRaw("Horizontal"), jump);
+        
+
 	}
 
     private void Update()
     {
         if (Input.GetButtonDown("Dash") || dashing)
             Dash();
+
+        if (dashing && !CheckIfGrounded())
+        {
+            alreadyDashedInAir = true;
+        }
+
+        if (CheckIfGrounded())
+            alreadyDashedInAir = false;
+
+        if (!dashing)
+        {
+            dashCoolDownTimer += Time.deltaTime;
+
+            if (dashCoolDownTimer > dashCoolDown)
+                dashCoolDownTimer = dashCoolDown;
+        }
     }
 
-    void Dash ()
+    private void LateUpdate()
     {
-        if (dashTimer <= dashDuration)
+        Debug.Log("Dash Attachment = " + dashAttachment);
+
+        if (dashAttachment != null)
         {
-            dashing = true;
+            transform.position = dashAttachment.transform.position;
 
-            //Debug.Log("Dashin'");
-            if (!OnSlope)
+            if (Input.GetButtonDown("Dash"))
             {
-                if (thisSprite.flipX)
-                    dashDirection = -transform.right;
-                else
-                    dashDirection = transform.right;
-            }
-            else
-            {
-                if (thisSprite.flipX)
-                    dashDirection = slopeDirection;
-                else
-                    dashDirection = -slopeDirection;
-            }
+                dashAttachment.GetComponentInChildren<DashGrabPointOrientation>().coolDownTimer = 0f;
+                dashAttachment = null;
+                
+                foreach (Collider collider in attachmentColliders)
+                {
+                    Physics.IgnoreCollision(thisCollider, collider, false);
+                }
 
-            dashTimer += Time.deltaTime;
-            thisRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic; 
-            //Dash can be pretty fast, so it's better to use ContinuousDynamic to prevent some noclip glitches.
+                attachmentColliders.Clear();
+                Dash();
+            }
         }
-        else
-        {
-            dashing = false;
-            thisRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
-            //The rest of the time, a ContinuousDynamic detection mode can result in the player getting stuck. Besides, it's pretty expensive, so we switch back do Discrete detection.
-            dashTimer = 0f;
-        }
-
-        thisRigidbody.velocity = dashDirection * dashSpeed;
     }
 
+    void Dash()
+    {
+        if (!alreadyDashedInAir || dashing)
+        {
+            if (dashTimer <= dashDuration && dashCoolDownTimer >= dashCoolDown)
+            {
+                dashing = true;
+
+                //Debug.Log("Dashin'");
+                if (!OnSlope)
+                {
+                    if (thisSprite.flipX)
+                        dashDirection = -transform.right;
+                    else
+                        dashDirection = transform.right;
+                }
+                else
+                {
+                    if (thisSprite.flipX)
+                        dashDirection = slopeDirection;
+                    else
+                        dashDirection = -slopeDirection;
+                }
+
+                dashTimer += Time.deltaTime;
+                thisRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                //Dash can be pretty fast, so it's better to use ContinuousDynamic to prevent some noclip glitches.
+            }
+            else if (dashTimer > dashDuration)
+            {
+                dashing = false;
+                thisRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
+                //The rest of the time, a ContinuousDynamic detection mode can result in the player getting stuck. Besides, it's pretty expensive, so we switch back do Discrete detection.
+                dashTimer = 0f;
+                dashCoolDownTimer = 0f;
+            }
+
+            thisRigidbody.velocity = dashDirection * dashSpeed;
+        }
+    }
 }

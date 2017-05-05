@@ -285,7 +285,7 @@ public class Characters : MonoBehaviour {
         transform.position += Vector3.up * (Mathf.Abs(stepHeight) + .05f);
     }
 
-    bool CheckIfGrounded()
+    public bool CheckIfGrounded()
     {
         if (OnSlope)
             return true;
