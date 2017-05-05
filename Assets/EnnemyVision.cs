@@ -35,7 +35,7 @@ public class EnnemyVision : MonoBehaviour {
         drawDetectSphere = false;
         if (playerToEnemyDistance <= sigthRange)
         {
-            Debug.Log("Player is in sight range");
+            //Debug.Log("Player is in sight range");
             Vector3 sightDirection;
 
             if (sprite.flipX)
@@ -82,7 +82,7 @@ public class EnnemyVision : MonoBehaviour {
             drawDetectSphere = true;
             thisEnemy.PlayerInSight = true;
             Debug.DrawLine(transform.position, hit.point, Color.red);
-            Debug.Log("PLAYER IN SIGHT");
+            //Debug.Log("PLAYER IN SIGHT");
         }
     }
 

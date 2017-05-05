@@ -4,23 +4,23 @@ using UnityEngine;
 
 public class Player : Characters {
 
-    [SerializeField]
-    float dashDuration = 1f;
-    [SerializeField]
-    float dashSpeed = 10f;
-    float dashTimer = 0f;
-    bool jump = false;
-    bool dashing = false;
-    CollisionTests collisionTests;
-    Vector3 dashDirection;
-    SpriteRenderer thisSprite;
-    Rigidbody thisRigidbody;
+    #region Player Specific Parameters
+        [SerializeField]
+        float dashDuration = 1f;
+        [SerializeField]
+        float dashSpeed = 10f;
+    #endregion
+
+    #region moves States
+        bool jump = false;
+
+        bool dashing = false;
+        float dashTimer = 0f;
+        Vector3 dashDirection;
+    #endregion
 
     private void Start()
     {
-        collisionTests = gameObject.GetComponent<CollisionTests>();
-        thisSprite = gameObject.GetComponent<SpriteRenderer>();
-        thisRigidbody = gameObject.GetComponent<Rigidbody>();
     }
 
     void FixedUpdate ()
@@ -44,7 +44,7 @@ public class Player : Characters {
         {
             dashing = true;
 
-            Debug.Log("Dashin'");
+            //Debug.Log("Dashin'");
             if (!OnSlope)
             {
                 if (thisSprite.flipX)
@@ -61,18 +61,18 @@ public class Player : Characters {
             }
 
             dashTimer += Time.deltaTime;
-            thisRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-
-            //CheckStep();
+            thisRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic; 
+            //Dash can be pretty fast, so it's better to use ContinuousDynamic to prevent some noclip glitches.
         }
         else
         {
             dashing = false;
             thisRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
+            //The rest of the time, a ContinuousDynamic detection mode can result in the player getting stuck. Besides, it's pretty expensive, so we switch back do Discrete detection.
             dashTimer = 0f;
         }
 
-        thisCollider.GetComponent<Rigidbody>().velocity = dashDirection * dashSpeed;
+        thisRigidbody.velocity = dashDirection * dashSpeed;
     }
 
 }

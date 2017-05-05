@@ -18,8 +18,6 @@ public class CameraBehaviour : MonoBehaviour {
 
     bool goingLeft = false;
 
-    float margin = 0f;
-
     Vector3 targetPosition;
 
     GameObject player;

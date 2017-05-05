@@ -6,7 +6,6 @@ using System.Linq;
 public class Enemy : Characters {
 
     bool jump = false;
-    CollisionTests collisionTests;
 
     [SerializeField]
     GameObject LinkedPath;
@@ -20,7 +19,6 @@ public class Enemy : Characters {
     // Use this for initialization
     void Start ()
     {
-        collisionTests = gameObject.GetComponent<CollisionTests>();
         UpdateWayPointList();
         GetNextWayPoint();
     }
