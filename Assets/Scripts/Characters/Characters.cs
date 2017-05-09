@@ -21,7 +21,8 @@ public class Characters : MonoBehaviour {
         Vector3 moveDirection;
         private bool jumping;
 
-        float MomentumOnJump;
+        [HideInInspector]
+        public float MomentumOnJump;
         float previousTickHorizontalVelocity = 0f;
         float previousTickVerticalVelocity = 0f;
 

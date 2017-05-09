@@ -14,6 +14,8 @@ public class Enemy : Characters {
 
     #region State Machine Vars
     public bool PlayerInSight = false;
+    DashGrabPointOrientation grabbedScript;
+    Player player;
     #endregion
 
     // Use this for initialization
@@ -21,6 +23,8 @@ public class Enemy : Characters {
     {
         UpdateWayPointList();
         GetNextWayPoint();
+        grabbedScript = gameObject.GetComponentInChildren<DashGrabPointOrientation>();
+        player = GameObject.FindObjectOfType<Player>().GetComponent<Player>();
     }
 	
 	// Update is called once per frame
@@ -28,7 +32,11 @@ public class Enemy : Characters {
     {
         collisionTests.GetRealContactPointsCount();
         //jump = Input.GetButtonDown("Jump");
-        Patrol();
+
+        if (!player.dashAttachment == grabbedScript.gameObject)
+            Patrol();
+        else
+            Move(0, 0, false, false);
     }
 
     void UpdateWayPointList ()

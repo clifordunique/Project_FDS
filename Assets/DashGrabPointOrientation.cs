@@ -15,6 +15,7 @@ public class DashGrabPointOrientation : MonoBehaviour {
     Vector3 startPosition;
     GameObject player;
     Player playerClass;
+    DashGrabPointOrientation grabbedScript;
 
     bool readyToGrab = true;
 
@@ -32,7 +33,7 @@ public class DashGrabPointOrientation : MonoBehaviour {
 	// Update is called once per frame
 	void Update ()
     {
-        Debug.Log(transform.name + " grab cool down timer = " + coolDownTimer);
+        //Debug.Log(transform.name + " grab cool down timer = " + coolDownTimer);
 
         if (spriteRenderer.flipX == true)
             transform.localPosition = new Vector3(-startPosition.x, startPosition.y, startPosition.z);
@@ -50,13 +51,16 @@ public class DashGrabPointOrientation : MonoBehaviour {
 
     private void OnTriggerEnter(Collider other)
     {
-        Debug.Log("Trigger hit" + other.transform.name);
+        //Debug.Log("Trigger hit" + other.transform.name);
         if (other.CompareTag("Player") && coolDownTimer >= grabCoolDown)
         {
                 if (playerClass.dashing && playerClass.dashAttachment == null)
             {
                 playerClass.dashAttachment = gameObject;
+                playerClass.canDashFromAttachment = true;
                 playerClass.attachmentColliders = gameObject.GetComponentsInChildren<Collider>().ToList();
+
+                playerClass.StopAndResetDashNGrab(true);
 
                 foreach (Collider collider in playerClass.attachmentColliders)
                 {
