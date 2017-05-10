@@ -199,7 +199,7 @@ public class CollisionTests : MonoBehaviour {
         #region Debugging Stuff
         //Debug.Log("LeftMost = " + _leftMostContact);
         //Debug.Log("RightMost = " + _rightMostContact);
-        //Debug.DrawLine(new Vector3(_leftMostContact, _highestContact, transform.position.z), new Vector3(_rightMostContact, _lowestContact, transform.position.z), Color.red);
+        Debug.DrawLine(new Vector3(_leftMostContact, _highestContact, transform.position.z), new Vector3(_rightMostContact, _lowestContact, transform.position.z), Color.red);
 
 
         //DEBUG

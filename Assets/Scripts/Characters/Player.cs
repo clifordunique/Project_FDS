@@ -32,6 +32,13 @@ public class Player : Characters {
         [HideInInspector]
         public float dashCoolDownTimer = 0f;
         Vector3 dashDirection;
+
+    //Ledge grab state vars
+    [SerializeField]
+    float PaulineHeightPercentToGrabLedge = .7f;
+    [SerializeField]
+    float ledgeGrabSpeed = 10f;
+    bool ClimbingLedge = false;
     #endregion
 
     private void Start()
@@ -44,8 +51,31 @@ public class Player : Characters {
         collisionTests.GetRealContactPointsCount();
         jump = Input.GetButtonDown("Jump");
 
-        if (!dashing && dashAttachment == null)
+        if (!dashing && dashAttachment == null && !ClimbingLedge)
+        {
             Move(Input.GetAxisRaw("Horizontal"), jump);
+            Debug.Log("Regular moves");
+        }
+
+        if (ClimbingLedge)
+            LedgeGrab();
+
+        //Check for the ledge grab
+        if (!CheckIfGrounded() && (collisionTests.MaxRightSideCount >= 4 || collisionTests.MaxLeftSideCount >= 4))
+        {
+            Vector3 localLedgePosition = transform.InverseTransformPoint(new Vector3(transform.position.x, collisionTests._highestContact, transform.position.z));
+            float ledgeGrabHeight = thisCollider.bounds.size.y * PaulineHeightPercentToGrabLedge;
+
+            //Debug.Log("Touching something on the right side, highest local = " + transform.InverseTransformPoint(new Vector3(thisCollider.bounds.min.x, collisionTests._highestContact, thisCollider.bounds.min.z)));
+            Debug.DrawLine(thisCollider.bounds.min, new Vector3(transform.position.x, collisionTests._highestContact, transform.position.z), Color.red);
+
+            if (Mathf.Abs (thisCollider.bounds.min.y + ledgeGrabHeight - collisionTests._highestContact) < .1f)
+            {
+                Debug.Log("READY TO LEDGE GRAB");
+                CancelJump();
+                LedgeGrab();
+            }
+        }
 	}
 
     private void Update()
@@ -89,7 +119,7 @@ public class Player : Characters {
 
         if (Input.GetButtonDown("Dash") && !dashing && !alreadyDashedInAir)
         {
-            Debug.Log("Dash Button Pressed...");
+            //Debug.Log("Dash Button Pressed...");
             if (canDashFromAttachment)
             {
                 Debug.Log("... from " + dashAttachment.name + ".");
@@ -107,7 +137,7 @@ public class Player : Characters {
             }
             else
             {
-                Debug.Log("... from nothing");
+                //Debug.Log("... from nothing");
                 StartRegularDash();
             }
         }
@@ -115,7 +145,7 @@ public class Player : Characters {
 
     void StartDashFromAttachment ()
     {
-            Debug.Log("Started dash from attachment");
+            //Debug.Log("Started dash from attachment");
 
             dashDirection = new Vector3(Input.GetAxisRaw("Horizontal"), 0, 0);
 
@@ -142,7 +172,7 @@ public class Player : Characters {
 
     void StartRegularDash()
     {
-        Debug.Log("Start regular Dash");
+        //Debug.Log("Start regular Dash");
 
         if (dashTimer <= dashDuration && dashCoolDownTimer >= dashCoolDown)
         {
@@ -181,6 +211,21 @@ public class Player : Characters {
         if (dashTimer > dashDuration)
         {
             StopAndResetDashNGrab(false);
+        }
+    }
+
+    void LedgeGrab ()
+    {
+        if (collisionTests.MaxRightSideCount >= 4 || collisionTests.MaxLeftSideCount >= 4)
+        {
+            ClimbingLedge = true;
+            thisRigidbody.velocity = transform.up * ledgeGrabSpeed;
+            Debug.Log("Climbing Edge");
+        }
+        else
+        {
+            Debug.Log("End Ledge Climb");
+            ClimbingLedge = false;
         }
     }
 

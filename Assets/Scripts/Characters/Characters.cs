@@ -226,6 +226,11 @@ public class Characters : MonoBehaviour {
         moveDirection.x = MomentumOnJump;
         moveDirection.x = Mathf.Clamp(moveDirection.x, -speed, speed);
     }
+
+    public void CancelJump ()
+    {
+        moveDirection.y = 0f;
+    }
 #endregion
 
 #region Collision processing Methods
