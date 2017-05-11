@@ -42,13 +42,15 @@ public class Characters : MonoBehaviour {
         public CollisionTests collisionTests;
         [HideInInspector]
         public SpriteRenderer thisSprite;
+        [HideInInspector]
+        public Animator animator;
     #endregion
 
     #region external components
     CharactersSharedVariables sharedVariables;
     #endregion
 
-    #region Stairs Detection
+    #region Stairs & Slope Detection
         //Parameters
         public float stepMaxHeight = .5f;
         public float stepLengthDetection = .5f;
@@ -61,11 +63,16 @@ public class Characters : MonoBehaviour {
         float currentStepHeight = 0f;
 
         bool OnStep = false;
+
+        //Slope
         [HideInInspector]
         public bool OnSlope = false;
-
         [HideInInspector]
         public Vector3 slopeDirection;
+        [HideInInspector]
+        public float SlopeAngle = 0f;
+        [HideInInspector]
+        public bool mirrorSlope = false;
     #endregion
 
     // Use this for initialization
@@ -75,7 +82,8 @@ public class Characters : MonoBehaviour {
         thisCollider = this.gameObject.GetComponent<Collider>();
         thisRigidbody = gameObject.GetComponent<Rigidbody>();
         collisionTests = gameObject.GetComponent<CollisionTests>();
-        thisSprite = gameObject.GetComponent<SpriteRenderer>();
+        thisSprite = gameObject.GetComponentInChildren<SpriteRenderer>();
+        animator = gameObject.GetComponentInChildren<Animator>();
 
         if (sharedVariables == null)
             Debug.LogError ("The scene is missing the CharacterSharedVariables class, please check your current GameObjects");
@@ -136,6 +144,13 @@ public class Characters : MonoBehaviour {
                 moveDirection = slopeDirection * speed;
             else if (HorizontalDirection > 0)
                 moveDirection = -slopeDirection * speed;
+
+            SlopeAngle = Vector3.Angle(-transform.right, slopeDirection);
+
+            if (hit.normal.x > 0)
+                mirrorSlope = false;
+            else
+                mirrorSlope = true;
         }
 
         thisRigidbody.velocity = moveDirection;

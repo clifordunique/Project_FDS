@@ -23,6 +23,9 @@ public class Player : Characters {
         public GameObject dashAttachment = null;
         [HideInInspector]
         public List<Collider> attachmentColliders = new List<Collider>();
+        bool crouching = false;
+        Vector3 standingColliderSize;
+        Vector3 standingColliderPos;
 
         //Dash state vars
         [HideInInspector]
@@ -44,6 +47,8 @@ public class Player : Characters {
     private void Start()
     {
         dashCoolDownTimer = dashCoolDown;
+        standingColliderSize = gameObject.GetComponent<BoxCollider>().size;
+        standingColliderPos = gameObject.GetComponent<BoxCollider>().center;
     }
 
     void FixedUpdate ()
@@ -54,33 +59,25 @@ public class Player : Characters {
         if (!dashing && dashAttachment == null && !ClimbingLedge)
         {
             Move(Input.GetAxisRaw("Horizontal"), jump);
-            Debug.Log("Regular moves");
+            //Debug.Log("Regular moves");
         }
+
+        if (Input.GetAxisRaw("Vertical") <= -.5f && (CheckIfGrounded() || OnSlope))
+            Crouch();
+        else
+            Stand();
 
         if (ClimbingLedge)
             LedgeGrab();
 
         //Check for the ledge grab
-        if (!CheckIfGrounded() && (collisionTests.MaxRightSideCount >= 4 || collisionTests.MaxLeftSideCount >= 4))
-        {
-            Vector3 localLedgePosition = transform.InverseTransformPoint(new Vector3(transform.position.x, collisionTests._highestContact, transform.position.z));
-            float ledgeGrabHeight = thisCollider.bounds.size.y * PaulineHeightPercentToGrabLedge;
+        LedgeGrabCheck();
 
-            //Debug.Log("Touching something on the right side, highest local = " + transform.InverseTransformPoint(new Vector3(thisCollider.bounds.min.x, collisionTests._highestContact, thisCollider.bounds.min.z)));
-            Debug.DrawLine(thisCollider.bounds.min, new Vector3(transform.position.x, collisionTests._highestContact, transform.position.z), Color.red);
-
-            if (Mathf.Abs (thisCollider.bounds.min.y + ledgeGrabHeight - collisionTests._highestContact) < .1f)
-            {
-                Debug.Log("READY TO LEDGE GRAB");
-                CancelJump();
-                LedgeGrab();
-            }
-        }
 	}
 
     private void Update()
     {
-
+        UpdateAnimator();
 
         if (dashing && !CheckIfGrounded())
         {
@@ -141,6 +138,47 @@ public class Player : Characters {
                 StartRegularDash();
             }
         }
+    }
+
+    void UpdateAnimator ()
+    {
+        animator.SetBool("Crouching", crouching);
+        animator.SetBool("Dashing", dashing);
+    }
+
+    void Crouch ()
+    {
+        thisCollider.GetComponent<BoxCollider>().center = new Vector3(0, -0.8156404f, 0);
+        thisCollider.GetComponent<BoxCollider>().size = new Vector3(.43f, 0.4187193f, .2f);
+
+        if (OnSlope)
+        {
+            //Debug.Log("Pauline Sprite Rotation Euler = " + thisSprite.transform.eulerAngles + " & Slope Angle = " + SlopeAngle);
+            //thisSprite.transform.rotation = new Quaternion(thisSprite.transform.rotation.x, thisSprite.transform.rotation.y, -SlopeAngle, thisSprite.transform.rotation.w);
+            if(!mirrorSlope)
+                thisSprite.transform.eulerAngles = new Vector3(thisSprite.transform.eulerAngles.x, thisSprite.transform.eulerAngles.y, -SlopeAngle);
+            else
+                thisSprite.transform.eulerAngles = new Vector3(thisSprite.transform.eulerAngles.x, thisSprite.transform.eulerAngles.y, SlopeAngle);
+        }
+        else
+        {
+            thisSprite.transform.rotation = Quaternion.identity;
+        }
+
+        crouching = true;
+    }
+
+    void Stand()
+    {
+        thisCollider.GetComponent<BoxCollider>().center = standingColliderPos;
+        thisCollider.GetComponent<BoxCollider>().size = standingColliderSize;
+        crouching = false;
+        thisSprite.transform.rotation = Quaternion.identity;
+    }
+
+    void RotateToMatchSlope ()
+    {
+
     }
 
     void StartDashFromAttachment ()
@@ -217,17 +255,38 @@ public class Player : Characters {
         }
     }
 
+    void LedgeGrabCheck ()
+    {
+        if (!CheckIfGrounded() &&
+        ((collisionTests.MaxRightSideCount >= 4 && !thisSprite.flipX) ||
+        (collisionTests.MaxLeftSideCount >= 4 && thisSprite.flipX)))
+        {
+            Vector3 localLedgePosition = transform.InverseTransformPoint(new Vector3(transform.position.x, collisionTests._highestContact, transform.position.z));
+            float ledgeGrabHeight = thisCollider.bounds.size.y * PaulineHeightPercentToGrabLedge;
+
+            //Debug.Log("Touching something on the right side, highest local = " + transform.InverseTransformPoint(new Vector3(thisCollider.bounds.min.x, collisionTests._highestContact, thisCollider.bounds.min.z)));
+            Debug.DrawLine(thisCollider.bounds.min, new Vector3(transform.position.x, collisionTests._highestContact, transform.position.z), Color.red);
+
+            if (Mathf.Abs(thisCollider.bounds.min.y + ledgeGrabHeight - collisionTests._highestContact) < .1f)
+            {
+                //Debug.Log("READY TO LEDGE GRAB");
+                CancelJump();
+                LedgeGrab();
+            }
+        }
+    }
+
     void LedgeGrab ()
     {
         if (collisionTests.MaxRightSideCount >= 4 || collisionTests.MaxLeftSideCount >= 4)
         {
             ClimbingLedge = true;
             thisRigidbody.velocity = transform.up * ledgeGrabSpeed;
-            Debug.Log("Climbing Edge");
+            //Debug.Log("Climbing Edge");
         }
         else
         {
-            Debug.Log("End Ledge Climb");
+            //Debug.Log("End Ledge Climb");
             ClimbingLedge = false;
         }
     }
