@@ -229,6 +229,7 @@ public class Characters : MonoBehaviour {
 
     public void CancelJump ()
     {
+        jumping = false;
         moveDirection.y = 0f;
     }
 #endregion

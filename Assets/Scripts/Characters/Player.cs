@@ -33,13 +33,13 @@ public class Player : Characters {
         public float dashCoolDownTimer = 0f;
         Vector3 dashDirection;
 
-    //Ledge grab state vars
-    [SerializeField]
-    float PaulineHeightPercentToGrabLedge = .7f;
-    [SerializeField]
-    float ledgeGrabSpeed = 10f;
-    bool ClimbingLedge = false;
-    #endregion
+        //Ledge grab state vars
+        [SerializeField]
+        float PaulineHeightPercentToGrabLedge = .7f;
+        [SerializeField]
+        float ledgeGrabSpeed = 10f;
+        bool ClimbingLedge = false;
+        #endregion
 
     private void Start()
     {
@@ -166,6 +166,7 @@ public class Player : Characters {
                 }
             }
 
+
             dashing = true;
             ContinueDash();
     }
@@ -198,6 +199,8 @@ public class Player : Characters {
 
     void ContinueDash()
     {
+        CancelJump();
+
         //Continuity of dash
         //Debug.Log("Dashing");
         dashTimer += Time.deltaTime;
@@ -236,6 +239,7 @@ public class Player : Characters {
         dashCoolDownTimer = 0f;
         dashTimer = 0f;
         thisRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
+        alreadyDashedInAir = false;
         //The rest of the time, a ContinuousDynamic detection mode can result in the player getting stuck. Besides, it's pretty expensive, so we switch back do Discrete detection.
     }
 }

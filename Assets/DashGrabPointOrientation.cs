@@ -54,7 +54,7 @@ public class DashGrabPointOrientation : MonoBehaviour {
         //Debug.Log("Trigger hit" + other.transform.name);
         if (other.CompareTag("Player") && coolDownTimer >= grabCoolDown)
         {
-                if (playerClass.dashing && playerClass.dashAttachment == null)
+            if (playerClass.dashing && playerClass.dashAttachment == null && !playerClass.canDashFromAttachment)
             {
                 playerClass.dashAttachment = gameObject;
                 playerClass.canDashFromAttachment = true;
