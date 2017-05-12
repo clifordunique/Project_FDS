@@ -89,6 +89,8 @@ public class Characters : MonoBehaviour {
             Debug.LogError ("The scene is missing the CharacterSharedVariables class, please check your current GameObjects");
 	}
 
+    public Vector3 GroundHitNormal = Vector3.zero; 
+
     //Main Move Method
     public void Move(float HorizontalDirection, float VerticalDirection, bool jump, bool dash)
     {
@@ -109,8 +111,10 @@ public class Characters : MonoBehaviour {
                 MomentumOnJump = thisRigidbody.velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
                 jumping = true;
             }
-        } else
+        }
+        else if (!OnSlope)
         {
+            Debug.Log(transform.name + " in Air");
             ApplyGravity();
 
             if (TouchingHead())
@@ -154,9 +158,6 @@ public class Characters : MonoBehaviour {
         }
 
         thisRigidbody.velocity = moveDirection;
-
-        //Debug line to show the current velocity of the Character
-        //Debug.DrawRay(transform.position, thisRigidbody.velocity, Color.blue);
 
         //This is used for some calculations, for the natural U-turn for example...
         previousTickHorizontalVelocity = thisRigidbody.velocity.x;
@@ -332,32 +333,25 @@ public class Characters : MonoBehaviour {
     {
         if (collisionTests.MaxLeftSideCount >= 1)
             transform.position = transform.position + transform.right * .01f;
-
-        //Debug.Log("DESTUCKING OKER");
     }
 
     RaycastHit SlopeDetection()
     {
         RaycastHit hit = new RaycastHit();
         List<Ray> ray = new List<Ray>();
-        ray.Add(new Ray(thisCollider.bounds.min, -transform.up));
-        ray.Add(new Ray(new Vector3(thisCollider.bounds.max.x, thisCollider.bounds.min.y, transform.position.z), -transform.up));
+        ray.Add(new Ray(thisCollider.bounds.min, -transform.right));
+        ray.Add(new Ray(new Vector3(thisCollider.bounds.max.x, thisCollider.bounds.min.y, transform.position.z), transform.right));
 
         foreach (Ray singleRay in ray)
         {
-            if (Physics.Raycast(singleRay, out hit, Mathf.Infinity))
+            Debug.DrawRay(thisCollider.bounds.min, -transform.right, Color.cyan);
+            if (Physics.Raycast(singleRay, out hit, .1f))
             {
-                if (hit.distance < .1f)
+                float NormalAngle = Vector3.Angle(transform.right, hit.normal);
+                if (Mathf.Abs(NormalAngle - 90) > .1f && Mathf.Abs(NormalAngle) > .1f && Mathf.Abs(NormalAngle - 180) > .1f)
                 {
-                    float NormalAngle = Vector3.Angle(transform.right, hit.normal);
-                    if (Mathf.Abs(NormalAngle - 90) > .1f && Mathf.Abs(NormalAngle) > .1f && Mathf.Abs(NormalAngle - 180) > .1f)
-                    {
-                        OnSlope = true;
-                        break;
-                        //Debug.DrawRay(transform.position, hit.normal * 5f, Color.red);
-                    }
-                    else
-                        OnSlope = false;
+                    OnSlope = true;
+                    break;
                 }
                 else
                     OnSlope = false;
@@ -365,7 +359,6 @@ public class Characters : MonoBehaviour {
             else
                 OnSlope = false;
         }
-
         return hit;
     }
 #endregion
