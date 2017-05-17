@@ -1,32 +1,38 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using System.Linq;
 
 public class RayGun : MonoBehaviour {
 
     [SerializeField]
     float normalRange = .5f;
     [SerializeField]
-    float rangeComboMultiplier;
+    float rangeComboMultiplier = 2;
     [SerializeField]
-    int currentCombo = 0;
+    float ComboStepDuration = 1;
     [SerializeField]
-    float ComboStepDuration = 0;
+    int normalDamage = 1;
     [SerializeField]
-    int normalDamage;
-    [SerializeField]
-    int damageComboAmount;
+    int damageComboAmount = 2;
     [SerializeField]
     LayerMask rayLayers;
     [SerializeField]
     float rayDuration = .3f;
+    [SerializeField]
+    float coolDownDuration = .5f;
 
     float rayTimer = 0;
+    float comboTimer = 0;
+    float coolDownTimer;
     bool rayActive = false;
     float currentRange;
     LineRenderer lineRenderer;
+    int currentCombo = 0;
 
     Vector3 worldMousePos;
+
+    List<GameObject> alreadyTouchedInThisShot = new List<GameObject>();
 
 	// Use this for initialization
 	void Start ()
@@ -34,11 +40,37 @@ public class RayGun : MonoBehaviour {
         lineRenderer = gameObject.GetComponent<LineRenderer>();
         currentRange = normalRange;
         lineRenderer.enabled = false;
+        coolDownTimer = coolDownDuration;
 	}
 
     private void OnDrawGizmos()
     {
         Gizmos.DrawSphere(worldMousePos, 1f);
+    }
+
+    void ComboTiming ()
+    {
+        if (currentCombo > 0)
+        {
+            if (comboTimer <= ComboStepDuration)
+            {
+                comboTimer += Time.deltaTime;
+            }
+            else
+            {
+                comboTimer = 0;
+                currentCombo--;
+            }
+        }
+        else
+        {
+            comboTimer = 0;
+        }
+    }
+
+    void RangeCombo ()
+    {
+        currentRange = normalRange * rangeComboMultiplier;
     }
 
     // Update is called once per frame
@@ -49,18 +81,19 @@ public class RayGun : MonoBehaviour {
         worldMousePos = Camera.main.ScreenToWorldPoint(new Vector3 (Input.mousePosition.x, Input.mousePosition.y, Mathf.Abs (Camera.main.transform.position.z - transform.position.z)));
         worldMousePos.z = transform.position.z;
 
-        Debug.Log("Mouse screen pos = " + Input.mousePosition + ", world Pos = " + worldMousePos);
+        //Debug.Log("Mouse screen pos = " + Input.mousePosition + ", world Pos = " + worldMousePos);
 
         Vector3 rayDirection = worldMousePos - transform.position;
         rayDirection = Vector3.Normalize(rayDirection);
 
         Debug.DrawLine(transform.position, worldMousePos, Color.black);
 
-        if (Input.GetButtonDown("RayGun") && !rayActive)
+        if (Input.GetButtonDown("RayGun") && !rayActive && coolDownTimer >= coolDownDuration)
         {
             Debug.Log("PROJEEEEEET");
             rayActive = true;
             lineRenderer.enabled = true;
+            coolDownTimer = 0;
         }
 
         if (rayActive && rayTimer <= rayDuration)
@@ -77,7 +110,22 @@ public class RayGun : MonoBehaviour {
 
             if (Physics.Raycast(ray, out hit, currentRange, rayLayers))
             {
-                Debug.Log("RAYGUN HIT : " + hit.transform.name);
+                if (!alreadyTouchedInThisShot.Contains(hit.transform.gameObject))
+                {
+                    if (currentCombo < 3)
+                    {
+                        currentCombo++;
+                        comboTimer = 0;
+                    }
+
+                    Debug.Log("RAYGUN HIT : " + hit.transform.name);
+
+                    alreadyTouchedInThisShot.Add(hit.transform.gameObject);
+                }
+            }
+            else
+            {
+                currentCombo = 0;
             }
 
             rayTimer += Time.deltaTime;
@@ -87,6 +135,19 @@ public class RayGun : MonoBehaviour {
             rayTimer = 0;
             rayActive = false;
             lineRenderer.enabled = false;
+            alreadyTouchedInThisShot.Clear();
         }
-	}
+
+        ComboTiming();
+
+        if (currentCombo >= 1)
+            RangeCombo();
+        else
+            currentRange = normalRange;
+
+        if (coolDownTimer < coolDownDuration)
+            coolDownTimer += Time.deltaTime;
+        else
+            coolDownTimer = coolDownDuration;
+    }
 }
