@@ -11,6 +11,8 @@ public class RayGun : MonoBehaviour {
     [SerializeField]
     int currentCombo = 0;
     [SerializeField]
+    float ComboStepDuration = 0;
+    [SerializeField]
     int normalDamage;
     [SerializeField]
     int damageComboAmount;
@@ -24,6 +26,8 @@ public class RayGun : MonoBehaviour {
     float currentRange;
     LineRenderer lineRenderer;
 
+    Vector3 worldMousePos;
+
 	// Use this for initialization
 	void Start ()
     {
@@ -31,10 +35,27 @@ public class RayGun : MonoBehaviour {
         currentRange = normalRange;
         lineRenderer.enabled = false;
 	}
-	
-	// Update is called once per frame
-	void Update ()
+
+    private void OnDrawGizmos()
     {
+        Gizmos.DrawSphere(worldMousePos, 1f);
+    }
+
+    // Update is called once per frame
+    void Update ()
+    {
+        //Get Mouse Pos for Keyboard/Mouse control scheme
+
+        worldMousePos = Camera.main.ScreenToWorldPoint(new Vector3 (Input.mousePosition.x, Input.mousePosition.y, Mathf.Abs (Camera.main.transform.position.z - transform.position.z)));
+        worldMousePos.z = transform.position.z;
+
+        Debug.Log("Mouse screen pos = " + Input.mousePosition + ", world Pos = " + worldMousePos);
+
+        Vector3 rayDirection = worldMousePos - transform.position;
+        rayDirection = Vector3.Normalize(rayDirection);
+
+        Debug.DrawLine(transform.position, worldMousePos, Color.black);
+
         if (Input.GetButtonDown("RayGun") && !rayActive)
         {
             Debug.Log("PROJEEEEEET");
@@ -47,11 +68,11 @@ public class RayGun : MonoBehaviour {
             Ray ray = new Ray(transform.position, transform.right);
             RaycastHit hit;
 
-            Debug.DrawRay(transform.position, transform.right * currentRange, Color.red);
+            Debug.DrawRay(transform.position, rayDirection * currentRange, Color.red);
 
             Vector3[] positions = new Vector3[2];
             positions[0] = transform.position;
-            positions[1] = positions[0] + transform.right * currentRange;
+            positions[1] = positions[0] + rayDirection * currentRange;
             lineRenderer.SetPositions(positions);
 
             if (Physics.Raycast(ray, out hit, currentRange, rayLayers))
