@@ -25,6 +25,7 @@ public class RayGun : MonoBehaviour {
     float rayTimer = 0;
     float comboTimer = 0;
     float coolDownTimer;
+    int currentDamage = 1;
     bool rayActive = false;
     float currentRange;
     LineRenderer lineRenderer;
@@ -108,17 +109,25 @@ public class RayGun : MonoBehaviour {
             positions[1] = positions[0] + rayDirection * currentRange;
             lineRenderer.SetPositions(positions);
 
+            //Touched enemy or energized device
             if (Physics.Raycast(ray, out hit, currentRange, rayLayers))
             {
                 if (!alreadyTouchedInThisShot.Contains(hit.transform.gameObject))
                 {
-                    if (currentCombo < 3)
+                    if (currentCombo < 2)
                     {
                         currentCombo++;
                         comboTimer = 0;
                     }
 
                     Debug.Log("RAYGUN HIT : " + hit.transform.name);
+
+                    Enemy hitEnemy = hit.transform.GetComponent<Enemy>();
+
+                    if (hitEnemy != null)
+                    {
+                        hitEnemy.GetDamage(currentDamage);
+                    }
 
                     alreadyTouchedInThisShot.Add(hit.transform.gameObject);
                 }
@@ -144,6 +153,11 @@ public class RayGun : MonoBehaviour {
             RangeCombo();
         else
             currentRange = normalRange;
+
+        if (currentCombo >= 2)
+            currentDamage = damageComboAmount;
+        else
+            currentDamage = normalDamage;
 
         if (coolDownTimer < coolDownDuration)
             coolDownTimer += Time.deltaTime;

@@ -28,46 +28,49 @@ public class EnnemyVision : MonoBehaviour {
 	// Update is called once per frame
 	void Update ()
     {
-        float playerToEnemyDistance = Vector3.Magnitude (transform.position - player.transform.position);
-        float currentSightAngle = 0f;
-
-        thisEnemy.PlayerInSight = false;
-        drawDetectSphere = false;
-        if (playerToEnemyDistance <= sigthRange)
+        if (thisEnemy.energized)
         {
-            //Debug.Log("Player is in sight range");
-            Vector3 sightDirection;
+            float playerToEnemyDistance = Vector3.Magnitude(transform.position - player.transform.position);
+            float currentSightAngle = 0f;
 
-            if (sprite.flipX)
-                sightDirection = transform.right;
-            else
-                sightDirection = -transform.right;
-
-            currentSightAngle = Vector3.Angle(sightDirection, (transform.position - player.transform.position));
-            //Debug.Log(currentSightAngle);
-
-            if (currentSightAngle < sightAngle / 2)
+            thisEnemy.PlayerInSight = false;
+            drawDetectSphere = false;
+            if (playerToEnemyDistance <= sigthRange)
             {
-                RaycastHit hit;
-                List<Vector3> raytargets = new List<Vector3>();
-                Vector3 headCheck = new Vector3(player.thisCollider.bounds.center.x, player.thisCollider.bounds.center.y + (player.thisCollider.bounds.extents.y * .9f), player.thisCollider.bounds.center.z);
-                Vector3 feetCheck = new Vector3(player.thisCollider.bounds.center.x, player.thisCollider.bounds.center.y - (player.thisCollider.bounds.extents.y * .9f), player.thisCollider.bounds.center.z);
+                //Debug.Log("Player is in sight range");
+                Vector3 sightDirection;
 
-                raytargets.Add (headCheck);
-                raytargets.Add(player.thisCollider.bounds.center);
-                raytargets.Add(feetCheck);
+                if (sprite.flipX)
+                    sightDirection = transform.right;
+                else
+                    sightDirection = -transform.right;
 
-                foreach (Vector3 target in raytargets)
+                currentSightAngle = Vector3.Angle(sightDirection, (transform.position - player.transform.position));
+                //Debug.Log(currentSightAngle);
+
+                if (currentSightAngle < sightAngle / 2)
                 {
-                    if (!thisEnemy.PlayerInSight)
+                    RaycastHit hit;
+                    List<Vector3> raytargets = new List<Vector3>();
+                    Vector3 headCheck = new Vector3(player.thisCollider.bounds.center.x, player.thisCollider.bounds.center.y + (player.thisCollider.bounds.extents.y * .9f), player.thisCollider.bounds.center.z);
+                    Vector3 feetCheck = new Vector3(player.thisCollider.bounds.center.x, player.thisCollider.bounds.center.y - (player.thisCollider.bounds.extents.y * .9f), player.thisCollider.bounds.center.z);
+
+                    raytargets.Add(headCheck);
+                    raytargets.Add(player.thisCollider.bounds.center);
+                    raytargets.Add(feetCheck);
+
+                    foreach (Vector3 target in raytargets)
                     {
-                        if (Physics.Linecast(transform.position, target, out hit))
+                        if (!thisEnemy.PlayerInSight)
                         {
-                            ConfirmPlayerIsInSight(hit);
+                            if (Physics.Linecast(transform.position, target, out hit))
+                            {
+                                ConfirmPlayerIsInSight(hit);
+                            }
                         }
+                        else
+                            break;
                     }
-                    else
-                        break;
                 }
             }
         }
