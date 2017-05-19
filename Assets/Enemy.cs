@@ -175,7 +175,15 @@ public class Enemy : Characters {
 
         //Debug.Log("Patrol direction = " + moveDirection);
 
-        Move(moveDirection.x, jump);
+        Debug.Log("X distance from player to enemy = " + Mathf.Abs(player.transform.position.x - transform.position.x));
+
+        if (Mathf.Abs(player.transform.position.x - transform.position.x) > 3f)
+            Move(moveDirection.x, jump);
+        else
+        {
+            Move(0);
+            Debug.Log("Close to player");
+        }
     }
 
     void GoToLastKnownPosition ()
