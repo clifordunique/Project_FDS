@@ -30,6 +30,7 @@ public class RayGun : MonoBehaviour {
     float currentRange;
     LineRenderer lineRenderer;
     int currentCombo = 0;
+    bool secondaryFire = false;
 
     Vector3 worldMousePos;
 
@@ -74,12 +75,11 @@ public class RayGun : MonoBehaviour {
         currentRange = normalRange * rangeComboMultiplier;
     }
 
-    // Update is called once per frame
-    void Update ()
+    Vector3 Aiming ()
     {
         //Get Mouse Pos for Keyboard/Mouse control scheme
 
-        worldMousePos = Camera.main.ScreenToWorldPoint(new Vector3 (Input.mousePosition.x, Input.mousePosition.y, Mathf.Abs (Camera.main.transform.position.z - transform.position.z)));
+        worldMousePos = Camera.main.ScreenToWorldPoint(new Vector3(Input.mousePosition.x, Input.mousePosition.y, Mathf.Abs(Camera.main.transform.position.z - transform.position.z)));
         worldMousePos.z = transform.position.z;
 
         //Debug.Log("Mouse screen pos = " + Input.mousePosition + ", world Pos = " + worldMousePos);
@@ -87,32 +87,31 @@ public class RayGun : MonoBehaviour {
         Vector3 rayDirection = worldMousePos - transform.position;
         rayDirection = Vector3.Normalize(rayDirection);
 
-        Debug.DrawLine(transform.position, worldMousePos, Color.black);
+        //Debug.DrawLine(transform.position, worldMousePos, Color.black);
 
-        if (Input.GetButtonDown("RayGun") && !rayActive && coolDownTimer >= coolDownDuration)
+        return rayDirection;
+    }
+
+    void FiringRay (Vector3 rayDirection)
+    {
+        Ray ray = new Ray(transform.position, rayDirection * currentRange);
+
+
+        Debug.DrawRay(transform.position, rayDirection * currentRange, Color.black);
+
+        Vector3[] positions = new Vector3[2];
+        positions[0] = transform.position;
+        positions[1] = positions[0] + rayDirection * currentRange;
+        lineRenderer.SetPositions(positions);
+
+        RaycastHit[] hit = Physics.RaycastAll(ray, currentRange, rayLayers);
+
+        if (hit.Length > 0)
         {
-            Debug.Log("PROJEEEEEET");
-            rayActive = true;
-            lineRenderer.enabled = true;
-            coolDownTimer = 0;
-        }
-
-        if (rayActive && rayTimer <= rayDuration)
-        {
-            Ray ray = new Ray(transform.position, transform.right);
-            RaycastHit hit;
-
-            Debug.DrawRay(transform.position, rayDirection * currentRange, Color.red);
-
-            Vector3[] positions = new Vector3[2];
-            positions[0] = transform.position;
-            positions[1] = positions[0] + rayDirection * currentRange;
-            lineRenderer.SetPositions(positions);
-
             //Touched enemy or energized device
-            if (Physics.Raycast(ray, out hit, currentRange, rayLayers))
+            foreach (RaycastHit singleHit in hit)
             {
-                if (!alreadyTouchedInThisShot.Contains(hit.transform.gameObject))
+                if (!alreadyTouchedInThisShot.Contains(singleHit.transform.gameObject))
                 {
                     if (currentCombo < 2)
                     {
@@ -120,35 +119,32 @@ public class RayGun : MonoBehaviour {
                         comboTimer = 0;
                     }
 
-                    Debug.Log("RAYGUN HIT : " + hit.transform.name);
+                    Debug.Log("RAYGUN HIT : " + singleHit.transform.name);
 
-                    Enemy hitEnemy = hit.transform.GetComponent<Enemy>();
+                    Enemy hitEnemy = singleHit.transform.GetComponent<Enemy>();
 
                     if (hitEnemy != null)
                     {
-                        hitEnemy.GetDamage(currentDamage);
+                        if (!secondaryFire)
+                            hitEnemy.GetDamage(currentDamage);
+                        else if (secondaryFire && !hitEnemy.energized)
+                            hitEnemy.ReEnergize();
                     }
 
-                    alreadyTouchedInThisShot.Add(hit.transform.gameObject);
+                    alreadyTouchedInThisShot.Add(singleHit.transform.gameObject);
                 }
             }
-            else
-            {
-                currentCombo = 0;
-            }
-
-            rayTimer += Time.deltaTime;
         }
-        else if (rayTimer > rayDuration)
+        else
         {
-            rayTimer = 0;
-            rayActive = false;
-            lineRenderer.enabled = false;
-            alreadyTouchedInThisShot.Clear();
+            currentCombo = 0;
         }
 
-        ComboTiming();
+        rayTimer += Time.deltaTime;
+    }
 
+    void ComboParameters ()
+    {
         if (currentCombo >= 1)
             RangeCombo();
         else
@@ -163,5 +159,51 @@ public class RayGun : MonoBehaviour {
             coolDownTimer += Time.deltaTime;
         else
             coolDownTimer = coolDownDuration;
+    }
+
+    // Update is called once per frame
+    void FixedUpdate ()
+    {
+        Vector3 rayDirection = Aiming();
+
+        if (Input.GetButtonDown("RayGun") || Input.GetButton("RayGunSecondary"))
+        {
+            if (!rayActive && coolDownTimer >= coolDownDuration)
+            {
+                rayActive = true;
+                lineRenderer.enabled = true;
+
+                coolDownTimer = 0;
+
+                if (Input.GetButtonDown("RayGun"))
+                {
+                    lineRenderer.startColor = Color.red;
+                    lineRenderer.endColor = Color.red;
+                    secondaryFire = false;
+                }
+                else if (Input.GetButtonDown("RayGunSecondary"))
+                {
+                    //lineRenderer.colorGradient = Gradient.;
+                    lineRenderer.startColor = Color.green;
+                    lineRenderer.endColor = Color.green;
+                    secondaryFire = true;
+                }
+            }
+        }
+
+        if (rayActive && rayTimer <= rayDuration)
+        {
+            FiringRay(rayDirection);
+        }
+        else if (rayTimer > rayDuration)
+        {
+            rayTimer = 0;
+            rayActive = false;
+            lineRenderer.enabled = false;
+            alreadyTouchedInThisShot.Clear();
+        }
+
+        ComboTiming();
+        ComboParameters();
     }
 }

@@ -10,7 +10,8 @@ public class Enemy : Characters {
     [SerializeField]
     GameObject LinkedPath;
     [SerializeField]
-    int HealthPoints = 3;
+    int maxHealthPoints = 3;
+    int currentHealthPoints;
     List<Transform> wayPoints = new List<Transform>();
     Transform currentWayPoint = null;
     Vector3 targetLastKnownPosition = Vector3.zero;
@@ -39,6 +40,7 @@ public class Enemy : Characters {
         player = GameObject.FindObjectOfType<Player>().GetComponent<Player>();
         ExclamationPoint = transform.Find("ExclamationPoint");
         QuestionMark = transform.Find("QuestionMark");
+        currentHealthPoints = maxHealthPoints;
     }
 	
 	// Update is called once per frame
@@ -84,9 +86,15 @@ public class Enemy : Characters {
             Move(0, 0, false, false);
     }
 
+    public void ReEnergize ()
+    {
+        energized = true;
+        currentHealthPoints = maxHealthPoints;
+    }
+
     private void Update()
     {
-        if (HealthPoints <= 0)
+        if (currentHealthPoints <= 0)
         {
             energized = false;
         }
@@ -107,10 +115,10 @@ public class Enemy : Characters {
 
     public void GetDamage (int damageAmount)
     {
-        HealthPoints -= damageAmount;
+        currentHealthPoints -= damageAmount;
 
-        if (HealthPoints < 0)
-            HealthPoints = 0;
+        if (currentHealthPoints < 0)
+            currentHealthPoints = 0;
     }
 
     void UpdateWayPointList ()
