@@ -63,7 +63,7 @@ public class Enemy : Characters {
                     Chase();
                     ExclamationPoint.gameObject.SetActive(true);
                     QuestionMark.gameObject.SetActive(false);
-                    Debug.Log(transform.name + " chasing");
+                    //Debug.Log(transform.name + " chasing");
                     break;
                 case BehaviourStates.LostTrack:
                     GoToLastKnownPosition();
@@ -78,7 +78,7 @@ public class Enemy : Characters {
                         currentBehaviour = BehaviourStates.Patrol;
                     }
 
-                    Debug.Log(transform.name + " Lost Track");
+                    //Debug.Log(transform.name + " Lost Track");
                     break;
             }
         }
@@ -175,14 +175,14 @@ public class Enemy : Characters {
 
         //Debug.Log("Patrol direction = " + moveDirection);
 
-        Debug.Log("X distance from player to enemy = " + Mathf.Abs(player.transform.position.x - transform.position.x));
+        //Debug.Log("X distance from player to enemy = " + Mathf.Abs(player.transform.position.x - transform.position.x));
 
         if (Mathf.Abs(player.transform.position.x - transform.position.x) > 3f)
             Move(moveDirection.x, jump);
         else
         {
             Move(0);
-            Debug.Log("Close to player");
+            //Debug.Log("Close to player");
         }
     }
 

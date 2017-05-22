@@ -11,14 +11,13 @@ public class Characters : MonoBehaviour {
     public float speed = 10;
     [SerializeField]
     float jumpMomentumInfluenceRate = .1f;
-    [SerializeField]
-    float jumpStrength = 12f;
+    public float jumpStrength = 12f;
     [SerializeField]
     float minimumWallSize = .25f;
     #endregion
 
     #region Moves Vars
-        Vector3 moveDirection;
+        public Vector3 moveDirection;
         private bool jumping;
 
         [HideInInspector]
@@ -114,7 +113,7 @@ public class Characters : MonoBehaviour {
         }
         else if (!OnSlope)
         {
-            Debug.Log(transform.name + " in Air");
+            //Debug.Log(transform.name + " in Air");
             ApplyGravity();
 
             if (TouchingHead())
@@ -259,7 +258,7 @@ public class Characters : MonoBehaviour {
             return false;
     }
 
-    bool TouchingWallOnLeft()
+    public bool TouchingWallOnLeft()
     {
         if (collisionTests.MaxLeftSideCount >= 4)
         {
@@ -294,7 +293,7 @@ public class Characters : MonoBehaviour {
         }
     }
 
-    bool TouchingWallOnRight()
+    public bool TouchingWallOnRight()
     {
         if (collisionTests.MaxRightSideCount >= 4 && collisionTests.yHighestDiff >= minimumWallSize)
             //TODO: Replace minimumWallSize with a percentage of Pauline's collider height for better control

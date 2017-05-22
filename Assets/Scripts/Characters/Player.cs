@@ -11,12 +11,12 @@ public class Player : Characters {
         float dashSpeed = 10f;
         [SerializeField]
         float dashCoolDown = .5f;
-        [HideInInspector]
-        bool alreadyDashedInAir = false;
+    [SerializeField]
+    float swallJmupDuration = .2f;
     #endregion
 
     #region moves States
-        bool jump = false;
+        //bool Input.GetButtonDown("Jump") = false;
         [HideInInspector]
         public bool canDashFromAttachment = false;
         [HideInInspector]
@@ -26,6 +26,7 @@ public class Player : Characters {
         bool crouching = false;
         Vector3 standingColliderSize;
         Vector3 standingColliderPos;
+    float swallJmupTimer = 0f;
 
         //Dash state vars
         [HideInInspector]
@@ -35,31 +36,80 @@ public class Player : Characters {
         [HideInInspector]
         public float dashCoolDownTimer = 0f;
         Vector3 dashDirection;
+        [HideInInspector]
+        bool alreadyDashedInAir = false;
 
-        //Ledge grab state vars
-        [SerializeField]
+    //Ledge grab state vars
+    [SerializeField]
         float PaulineHeightPercentToGrabLedge = .7f;
         [SerializeField]
         float ledgeGrabSpeed = 10f;
         bool ClimbingLedge = false;
-        #endregion
+    #endregion
+
+    Transform mdr;
 
     private void Start()
     {
         dashCoolDownTimer = dashCoolDown;
+        swallJmupTimer = swallJmupDuration;
         standingColliderSize = gameObject.GetComponent<BoxCollider>().size;
         standingColliderPos = gameObject.GetComponent<BoxCollider>().center;
+        mdr = transform.Find("mdr");
+        mdr.gameObject.SetActive(false);
     }
+
+    bool swallJmuping = false;
+    bool jump = false;
+    bool justJumped = false;
+    float swallJmupDirection = 0;
 
     void FixedUpdate ()
     {
         collisionTests.GetRealContactPointsCount();
-        jump = Input.GetButtonDown("Jump");
 
-        if (!dashing && dashAttachment == null && !ClimbingLedge)
+        if ((TouchingWallOnRight() || TouchingWallOnLeft()) && Mathf.Abs(collisionTests.yHighestDiff - thisCollider.bounds.size.y) < .2f && !CheckIfGrounded())
+        {
+            if (jump && !justJumped)
+            {
+                if (TouchingWallOnLeft())
+                    swallJmupDirection = 1;
+                else if (TouchingWallOnRight())
+                    swallJmupDirection = -1;
+
+
+                swallJmupTimer = 0f;
+                moveDirection.y = jumpStrength;
+                swallJmuping = true;
+                jump = false;
+            }
+            Debug.Log("Ready to Swall Jmup");
+        }
+
+        if (swallJmupTimer < swallJmupDuration)
+        {
+            swallJmupTimer += Time.deltaTime;
+            Move(swallJmupDirection, false);
+            Debug.Log("Swall Jmuping");
+            swallJmuping = true;
+            jump = false;
+            mdr.gameObject.SetActive(true);
+        }
+        else
+        {
+            swallJmuping = false;
+            mdr.gameObject.SetActive(false);
+        }
+
+        //regular moves
+        if (!dashing && dashAttachment == null && !ClimbingLedge && !swallJmuping)
         {
             Move(Input.GetAxisRaw("Horizontal"), jump);
-            //Debug.Log("Regular moves");
+
+            if (jump)
+                justJumped = true;
+            else
+                justJumped = false;
         }
 
         if (Input.GetAxisRaw("Vertical") <= -.5f && (CheckIfGrounded() || OnSlope))
@@ -77,7 +127,9 @@ public class Player : Characters {
 
     private void Update()
     {
+        //Input.GetButtonDown("Jump") = Input.GetButtonDown("Input.GetButtonDown("Jump")");
         UpdateAnimator();
+        jump = Input.GetButtonDown("Jump");
 
         if (dashing && !CheckIfGrounded())
         {
@@ -132,7 +184,7 @@ public class Player : Characters {
                 attachmentColliders.Clear();
                 StartDashFromAttachment();
             }
-            else
+            else if (!swallJmuping)
             {
                 //Debug.Log("... from nothing");
                 StartRegularDash();
@@ -176,11 +228,6 @@ public class Player : Characters {
         thisSprite.transform.rotation = Quaternion.identity;
     }
 
-    void RotateToMatchSlope ()
-    {
-
-    }
-
     void StartDashFromAttachment ()
     {
             //Debug.Log("Started dash from attachment");
@@ -204,7 +251,6 @@ public class Player : Characters {
                 }
             }
 
-
             dashing = true;
             ContinueDash();
     }
@@ -212,6 +258,7 @@ public class Player : Characters {
     void StartRegularDash()
     {
         //Debug.Log("Start regular Dash");
+        dashTimer = 0f;
 
         if (dashTimer <= dashDuration && dashCoolDownTimer >= dashCoolDown)
         {
@@ -239,6 +286,9 @@ public class Player : Characters {
     {
         CancelJump();
 
+        if (TouchingWallOnRight())
+            Debug.Log("Touching Wall During Dash");
+
         //Continuity of dash
         //Debug.Log("Dashing");
         dashTimer += Time.deltaTime;
@@ -251,6 +301,7 @@ public class Player : Characters {
         //Finish Dash
         if (dashTimer > dashDuration)
         {
+            //TODO: Check this, seems buggy and timer won't rester properly when doing wall jumps
             StopAndResetDashNGrab(false);
         }
     }

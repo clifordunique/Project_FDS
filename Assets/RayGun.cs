@@ -96,7 +96,6 @@ public class RayGun : MonoBehaviour {
     {
         Ray ray = new Ray(transform.position, rayDirection * currentRange);
 
-
         Debug.DrawRay(transform.position, rayDirection * currentRange, Color.black);
 
         Vector3[] positions = new Vector3[2];
