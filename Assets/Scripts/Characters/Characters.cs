@@ -235,6 +235,9 @@ public class Characters : MonoBehaviour {
 
     void AirControl (float MomentumInfluenceBaseRate)
     {
+        //MomentumOnJump = 0;
+        //MomentumInfluenceBaseRate = 0;
+
         if (MomentumInfluenceBaseRate != 0) //This check is to prevent the character to just stop the momentum in middle-air
             MomentumOnJump = Mathf.Lerp(previousTickHorizontalVelocity, MomentumInfluenceBaseRate * speed, jumpMomentumInfluenceRate);
 
@@ -288,12 +291,12 @@ public class Characters : MonoBehaviour {
         }
         else //Not enough contact point on Pauline's side, so we return immediately false without any more verifications
         {
-            Debug.Log("Not touching left wall because MaxLeftSideCount is " + collisionTests.MaxLeftSideCount);
+            //Debug.Log("Not touching left wall because MaxLeftSideCount is " + collisionTests.MaxLeftSideCount);
             return false;
         }
     }
 
-    public bool TouchingWallOnRight()
+    public bool TouchingWallOnRight() //TODO: is there a reason the left wall detection has more stuff? Plz investigate and clean up.
     {
         if (collisionTests.MaxRightSideCount >= 4 && collisionTests.yHighestDiff >= minimumWallSize)
             //TODO: Replace minimumWallSize with a percentage of Pauline's collider height for better control
