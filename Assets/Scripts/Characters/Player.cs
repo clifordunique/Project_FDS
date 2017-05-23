@@ -189,8 +189,11 @@ public class Player : Characters {
     {
         if ((TouchingWallOnRight() || TouchingWallOnLeft()) && Mathf.Abs(collisionTests.yHighestDiff - thisCollider.bounds.size.y) < .2f && !CheckIfGrounded())
         {
+            FallDragMultiplier = 1.05f;
+
             if (jump && !justJumped)
             {
+                FallDragMultiplier = 0f;
                 if (TouchingWallOnLeft())
                 {
                     swallJmupDirection = 1;
@@ -208,6 +211,11 @@ public class Player : Characters {
                 jump = false;
             }
             //Debug.Log("Ready to Swall Jmup");
+        }
+        else
+        {
+            FallDragMultiplier = 0f;
+            //deactivateNormalGravity = false;
         }
     }
 

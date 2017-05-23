@@ -19,11 +19,15 @@ public class Characters : MonoBehaviour {
     #region Moves Vars
         public Vector3 moveDirection;
         private bool jumping;
+        [HideInInspector]
+        public bool deactivateNormalGravity = false;
 
         [HideInInspector]
         public float MomentumOnJump;
         float previousTickHorizontalVelocity = 0f;
         float previousTickVerticalVelocity = 0f;
+    [HideInInspector]
+    public float FallDragMultiplier = 0f;
 
         //Brakes Vars
         bool braking = false;
@@ -46,7 +50,8 @@ public class Characters : MonoBehaviour {
     #endregion
 
     #region external components
-    CharactersSharedVariables sharedVariables;
+    [HideInInspector]
+    public CharactersSharedVariables sharedVariables;
     #endregion
 
     #region Stairs & Slope Detection
@@ -114,7 +119,8 @@ public class Characters : MonoBehaviour {
         else if (!OnSlope)
         {
             //Debug.Log(transform.name + " in Air");
-            ApplyGravity();
+            if(!deactivateNormalGravity)
+                ApplyGravity();
 
             if (TouchingHead())
                 moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
@@ -155,6 +161,10 @@ public class Characters : MonoBehaviour {
             else
                 mirrorSlope = true;
         }
+
+        //Applying Fall Drag if any
+        if (moveDirection.y < 0 && FallDragMultiplier != 0)
+            moveDirection.y /= FallDragMultiplier;
 
         thisRigidbody.velocity = moveDirection;
 
@@ -230,7 +240,12 @@ public class Characters : MonoBehaviour {
 
     void ApplyGravity ()
     {
-            moveDirection.y -= sharedVariables.Gravity * Time.deltaTime;
+        ApplyGravity(sharedVariables.Gravity);
+    }
+
+    public void ApplyGravity (float gravityOverride)
+    {
+        moveDirection.y -= gravityOverride * Time.deltaTime;
     }
 
     void AirControl (float MomentumInfluenceBaseRate)
