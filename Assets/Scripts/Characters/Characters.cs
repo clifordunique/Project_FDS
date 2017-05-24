@@ -166,6 +166,8 @@ public class Characters : MonoBehaviour {
         if (moveDirection.y < 0 && FallDragMultiplier != 0)
             moveDirection.y /= FallDragMultiplier;
 
+
+
         thisRigidbody.velocity = moveDirection;
 
         //This is used for some calculations, for the natural U-turn for example...
@@ -344,6 +346,23 @@ public class Characters : MonoBehaviour {
         {
             return false;
         }
+    }
+
+    public Collider CheckIfGroundedInDropDownPlatform ()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(thisCollider.bounds.center, -transform.up, out hit, Mathf.Infinity))
+        {
+            Debug.DrawRay(thisCollider.bounds.center, -transform.up, Color.red);
+
+            if (hit.collider.CompareTag("DropDownPlatform"))
+                return hit.collider;
+            else
+                return null;
+        }
+        else
+            return null;
+
     }
 
     public void CornerStuck()

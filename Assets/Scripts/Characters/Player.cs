@@ -26,7 +26,8 @@ public class Player : Characters {
         bool crouching = false;
         Vector3 standingColliderSize;
         Vector3 standingColliderPos;
-    float swallJmupTimer = 0f;
+        Collider justDroppedPlatform = null;
+        float swallJmupTimer = 0f;
 
         //Dash state vars
         [HideInInspector]
@@ -72,6 +73,13 @@ public class Player : Characters {
         CheckForSwallJmup();
         ContinueSwallJmup();
 
+        if (justDroppedPlatform != null && CheckIfGotPastDropDownPlatform())
+        {
+            Physics.IgnoreCollision(thisCollider, justDroppedPlatform, false);
+            justDroppedPlatform = null;
+        }
+
+
         //regular moves
         if (!dashing && dashAttachment == null && !ClimbingLedge && !swallJmuping)
         {
@@ -86,7 +94,17 @@ public class Player : Characters {
         }
 
         if (Input.GetAxisRaw("Vertical") <= -.5f && (CheckIfGrounded() || OnSlope))
-            Crouch();
+        {
+            Collider DropDownPlatform = CheckIfGroundedInDropDownPlatform();
+
+            if (DropDownPlatform == null)
+                Crouch();
+            else
+            {
+                Physics.IgnoreCollision(thisCollider, DropDownPlatform, true);
+                justDroppedPlatform = DropDownPlatform;
+            }
+        }
         else
             Stand();
 
@@ -97,6 +115,14 @@ public class Player : Characters {
         LedgeGrabCheck();
 
 	}
+
+    bool CheckIfGotPastDropDownPlatform ()
+    {
+        if (thisCollider.bounds.max.y < justDroppedPlatform.bounds.min.y - .1f)
+            return true;
+        else
+            return false;
+    }
 
     private void Update()
     {
@@ -110,7 +136,9 @@ public class Player : Characters {
         }
 
         if (CheckIfGrounded())
+        {
             alreadyDashedInAir = false;
+        }
 
         if (!dashing)
         {
@@ -129,8 +157,6 @@ public class Player : Characters {
 
     private void LateUpdate()
     {
-        Debug.Log(Input.GetAxisRaw("Vertical"));
-
         //Debug.Log("Dash Attachment = " + dashAttachment);
         if (dashing)
             ContinueDash();
