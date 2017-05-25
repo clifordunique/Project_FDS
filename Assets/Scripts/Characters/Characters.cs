@@ -169,7 +169,7 @@ public class Characters : MonoBehaviour {
 
         //Flipping sprite to face latest direction
         //TODO : Should be improved a bit during jump and U-turns
-        if (previousTickHorizontalVelocity == 0f)
+        if (previousTickHorizontalVelocity == 0f || !CheckIfGrounded())
         {
             if (moveDirection.x < 0)
                 thisSprite.flipX = true;
