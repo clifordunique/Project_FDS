@@ -391,6 +391,28 @@ public class Player : Characters {
             //Debug.Log("End Ledge Climb");
             ClimbingLedge = false;
         }
+
+        if (Input.GetButtonDown("Jump")) //Cancelling Ledge Grab with a wall jump
+        {
+            FallDragMultiplier = 0f;
+            if (thisSprite.flipX)
+            {
+                swallJmupDirection = 1;
+                thisSprite.flipX = false;
+            }
+            else
+            {
+                swallJmupDirection = -1;
+                thisSprite.flipX = true;
+            }
+
+            swallJmupTimer = 0f;
+            moveDirection.y = jumpStrength;
+            swallJmuping = true;
+            jump = false;
+
+            ClimbingLedge = false;
+        }
     }
 
     public void StopAndResetDashNGrab (bool calledByEnemy)
