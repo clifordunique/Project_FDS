@@ -84,7 +84,7 @@ public class EnnemyVision : MonoBehaviour {
         {
             drawDetectSphere = true;
             thisEnemy.PlayerInSight = true;
-            Debug.DrawLine(transform.position, hit.point, Color.red);
+            //Debug.DrawLine(transform.position, hit.point, Color.red);
             //Debug.Log("PLAYER IN SIGHT");
         }
     }

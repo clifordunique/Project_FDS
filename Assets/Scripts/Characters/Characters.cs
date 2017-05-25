@@ -95,12 +95,21 @@ public class Characters : MonoBehaviour {
             Debug.LogError ("The scene is missing the CharacterSharedVariables class, please check your current GameObjects");
 	}
 
-    public Vector3 GroundHitNormal = Vector3.zero; 
+    public Vector3 GroundHitNormal = Vector3.zero;
+
+    bool previousFrameOnSlope = false;
 
     //Main Move Method
     public void Move(float HorizontalDirection, float VerticalDirection, bool jump, bool dash)
     {
         RaycastHit hit = SlopeDetection();
+
+        if(!OnSlope && previousFrameOnSlope && !jump && !jumping) //Preventing Character from jumping off a slope when climbing it at full speed
+        {//TODO : Not working when trying to jump for some reasons, and not working when going down a slope ever, fix it felix
+            Debug.Log(transform.name + " exited slope.");
+            moveDirection.y = -1;
+            previousFrameOnSlope = false;
+        }
 
         if (justDroppedPlatform != null && CheckIfGotPastDropDownPlatform())
         {
@@ -111,6 +120,7 @@ public class Characters : MonoBehaviour {
             if (moveDirection.y > 0) //Cancelling upward move if we were climbing the platform
                 moveDirection.y = 0;
         }
+
 
 
         if (CheckIfGrounded())
@@ -192,6 +202,8 @@ public class Characters : MonoBehaviour {
                 mirrorSlope = false;
             else
                 mirrorSlope = true;
+
+            previousFrameOnSlope = true;
         }
 
         //Applying Fall Drag if any
@@ -395,7 +407,7 @@ public class Characters : MonoBehaviour {
         RaycastHit hit;
         if (Physics.Raycast(thisCollider.bounds.center, -transform.up, out hit, Mathf.Infinity))
         {
-            Debug.DrawRay(thisCollider.bounds.center, -transform.up, Color.red);
+            //Debug.DrawRay(thisCollider.bounds.center, -transform.up, Color.red);
 
             if (hit.collider.CompareTag("DropDownPlatform"))
                 return hit.collider;
@@ -412,7 +424,7 @@ public class Characters : MonoBehaviour {
         RaycastHit hit;
         if (Physics.Raycast(thisCollider.bounds.center, transform.up, out hit, Mathf.Infinity))
         {
-            Debug.DrawRay(thisCollider.bounds.center, transform.up, Color.red);
+            //Debug.DrawRay(thisCollider.bounds.center, transform.up, Color.red);
 
             if (hit.collider.CompareTag("DropDownPlatform"))
                 return hit.collider;
@@ -437,9 +449,14 @@ public class Characters : MonoBehaviour {
         ray.Add(new Ray(thisCollider.bounds.min, -transform.right));
         ray.Add(new Ray(new Vector3(thisCollider.bounds.max.x, thisCollider.bounds.min.y, transform.position.z), transform.right));
 
+        /*float RayRange = .1f;
+
+        if (CheckIfGrounded() && !OnSlope)
+            RayRange = Mathf.Infinity;*/
+
         foreach (Ray singleRay in ray)
         {
-            Debug.DrawRay(thisCollider.bounds.min, -transform.right, Color.cyan);
+            //Debug.DrawRay(thisCollider.bounds.min, -transform.right, Color.cyan);
             if (Physics.Raycast(singleRay, out hit, .1f))
             {
                 float NormalAngle = Vector3.Angle(transform.right, hit.normal);

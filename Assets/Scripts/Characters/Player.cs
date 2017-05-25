@@ -80,7 +80,7 @@ public class Player : Characters {
         {
             Move(Input.GetAxisRaw("Horizontal"), jump);
 
-            Debug.Log("Jump = " + jump);
+            //Debug.Log("Jump = " + jump);
 
             if (jump) //JustJumped is used for the SwallJmup
                 justJumped = true;
@@ -154,7 +154,7 @@ public class Player : Characters {
             transform.position = dashAttachment.transform.position;
 
             //Jumping from attachement
-            if (jump) //TODO: Kinda works but can't jump without a direction...
+            if (jump)
             {
                 moveDirection.y = jumpStrength;
                 MomentumOnJump = 0;
@@ -370,7 +370,7 @@ public class Player : Characters {
             float ledgeGrabHeight = thisCollider.bounds.size.y * PaulineHeightPercentToGrabLedge;
 
             //Debug.Log("Touching something on the right side, highest local = " + transform.InverseTransformPoint(new Vector3(thisCollider.bounds.min.x, collisionTests._highestContact, thisCollider.bounds.min.z)));
-            Debug.DrawLine(thisCollider.bounds.min, new Vector3(transform.position.x, collisionTests._highestContact, transform.position.z), Color.red);
+            //Debug.DrawLine(thisCollider.bounds.min, new Vector3(transform.position.x, collisionTests._highestContact, transform.position.z), Color.red);
 
             if (Mathf.Abs(thisCollider.bounds.min.y + ledgeGrabHeight - collisionTests._highestContact) < .1f)
             {
