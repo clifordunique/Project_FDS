@@ -26,7 +26,6 @@ public class Player : Characters {
         bool crouching = false;
         Vector3 standingColliderSize;
         Vector3 standingColliderPos;
-        Collider justDroppedPlatform = null;
         float swallJmupTimer = 0f;
 
         //Dash state vars
@@ -73,13 +72,6 @@ public class Player : Characters {
         CheckForSwallJmup();
         ContinueSwallJmup();
 
-        if (justDroppedPlatform != null && CheckIfGotPastDropDownPlatform())
-        {
-            Physics.IgnoreCollision(thisCollider, justDroppedPlatform, false);
-            justDroppedPlatform = null;
-        }
-
-
         //regular moves
         if (!dashing && dashAttachment == null && !ClimbingLedge && !swallJmuping)
         {
@@ -97,13 +89,13 @@ public class Player : Characters {
         {
             Collider DropDownPlatform = CheckIfGroundedInDropDownPlatform();
 
-            if (DropDownPlatform == null)
-                Crouch();
-            else
+            if (Input.GetButtonDown("Jump") && DropDownPlatform != null)
             {
                 Physics.IgnoreCollision(thisCollider, DropDownPlatform, true);
                 justDroppedPlatform = DropDownPlatform;
             }
+            else
+                Crouch();
         }
         else
             Stand();
@@ -115,14 +107,6 @@ public class Player : Characters {
         LedgeGrabCheck();
 
 	}
-
-    bool CheckIfGotPastDropDownPlatform ()
-    {
-        if (thisCollider.bounds.max.y < justDroppedPlatform.bounds.min.y - .1f)
-            return true;
-        else
-            return false;
-    }
 
     private void Update()
     {

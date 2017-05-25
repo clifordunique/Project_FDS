@@ -21,6 +21,7 @@ public class Characters : MonoBehaviour {
         private bool jumping;
         [HideInInspector]
         public bool deactivateNormalGravity = false;
+        bool climbingDropDownPlatform = false;
 
         [HideInInspector]
         public float MomentumOnJump;
@@ -52,11 +53,12 @@ public class Characters : MonoBehaviour {
     #region external components
     [HideInInspector]
     public CharactersSharedVariables sharedVariables;
+    public Collider justDroppedPlatform = null;
     #endregion
 
     #region Stairs & Slope Detection
-        //Parameters
-        public float stepMaxHeight = .5f;
+    //Parameters
+    public float stepMaxHeight = .5f;
         public float stepLengthDetection = .5f;
         [SerializeField]
         LayerMask stepCheckIgnoredLayers;
@@ -100,6 +102,17 @@ public class Characters : MonoBehaviour {
     {
         RaycastHit hit = SlopeDetection();
 
+        if (justDroppedPlatform != null && CheckIfGotPastDropDownPlatform())
+        {
+            Physics.IgnoreCollision(justDroppedPlatform, thisCollider, false);
+            climbingDropDownPlatform = false;
+            justDroppedPlatform = null;
+
+            if (moveDirection.y > 0) //Cancelling upward move if we were climbing the platform
+                moveDirection.y = 0;
+        }
+
+
         if (CheckIfGrounded())
         {
             //Debug displayed when grounded
@@ -115,17 +128,36 @@ public class Characters : MonoBehaviour {
                 MomentumOnJump = thisRigidbody.velocity.x; //Using real speed instead of calculated one in case we are jumping from against a wall
                 jumping = true;
             }
+            else
+                MomentumOnJump = 0;
         }
         else if (!OnSlope)
         {
-            //Debug.Log(transform.name + " in Air");
-            if(!deactivateNormalGravity)
-                ApplyGravity();
+            if (!climbingDropDownPlatform)
+            {
+                //Debug.Log(transform.name + " in Air");
+                if (!deactivateNormalGravity)
+                    ApplyGravity();
 
-            if (TouchingHead())
-                moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
+                if (TouchingHead())
+                {
+                    Collider touchedDropDownPlatform = CheckIfHeadTouchingDropDownPlatform();
 
-            AirControl(HorizontalDirection);
+                    if (touchedDropDownPlatform == null)
+                        moveDirection.y = -sharedVariables.Gravity * Time.deltaTime;
+                    else
+                    {
+                        justDroppedPlatform = touchedDropDownPlatform;
+                        Physics.IgnoreCollision(touchedDropDownPlatform, thisCollider, true);
+                        climbingDropDownPlatform = true;
+                    }
+
+                }
+
+                AirControl(HorizontalDirection);
+            }
+            else
+                moveDirection.y = speed;
         }
 
         //Jumping must be only true when the character is going UPWARD, it's flagged FALSE once the character starts going downward
@@ -173,6 +205,16 @@ public class Characters : MonoBehaviour {
         //This is used for some calculations, for the natural U-turn for example...
         previousTickHorizontalVelocity = thisRigidbody.velocity.x;
         previousTickVerticalVelocity = thisRigidbody.velocity.y;
+    }
+
+    public bool CheckIfGotPastDropDownPlatform()
+    {
+        if (thisCollider.bounds.max.y < justDroppedPlatform.bounds.min.y - .1f)
+            return true;
+        else if (thisCollider.bounds.min.y > justDroppedPlatform.bounds.max.y + .1f)
+            return true;
+        else
+            return false;
     }
 
     //Move overrides
@@ -354,6 +396,23 @@ public class Characters : MonoBehaviour {
         if (Physics.Raycast(thisCollider.bounds.center, -transform.up, out hit, Mathf.Infinity))
         {
             Debug.DrawRay(thisCollider.bounds.center, -transform.up, Color.red);
+
+            if (hit.collider.CompareTag("DropDownPlatform"))
+                return hit.collider;
+            else
+                return null;
+        }
+        else
+            return null;
+
+    }
+
+    public Collider CheckIfHeadTouchingDropDownPlatform()
+    {
+        RaycastHit hit;
+        if (Physics.Raycast(thisCollider.bounds.center, transform.up, out hit, Mathf.Infinity))
+        {
+            Debug.DrawRay(thisCollider.bounds.center, transform.up, Color.red);
 
             if (hit.collider.CompareTag("DropDownPlatform"))
                 return hit.collider;
