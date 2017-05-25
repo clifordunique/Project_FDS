@@ -11,13 +11,15 @@ public class Player : Characters {
         float dashSpeed = 10f;
         [SerializeField]
         float dashCoolDown = .5f;
-    [SerializeField]
-    float swallJmupDuration = .2f;
+        [SerializeField]
+        float swallJmupDuration = .2f;
+        [SerializeField]
+        float minimumHeightTouchForSwallJmup = .99f;
     #endregion
 
     #region moves States
-        //bool Input.GetButtonDown("Jump") = false;
-        [HideInInspector]
+    //bool Input.GetButtonDown("Jump") = false;
+    [HideInInspector]
         public bool canDashFromAttachment = false;
         [HideInInspector]
         public GameObject dashAttachment = null;
@@ -54,6 +56,7 @@ public class Player : Characters {
     #endregion
 
     Transform mdr;
+
 
     private void Start()
     {
@@ -197,7 +200,7 @@ public class Player : Characters {
 
     void CheckForSwallJmup ()
     {
-        if ((TouchingWallOnRight() || TouchingWallOnLeft()) && Mathf.Abs(collisionTests.yHighestDiff - thisCollider.bounds.size.y) < .2f && !CheckIfGrounded())
+        if ((TouchingWallOnRight() || TouchingWallOnLeft()) && Mathf.Abs(collisionTests.yHighestDiff) > minimumHeightTouchForSwallJmup && !CheckIfGrounded())
         {
             FallDragMultiplier = 1.05f;
 
