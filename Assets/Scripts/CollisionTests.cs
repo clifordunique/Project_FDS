@@ -6,17 +6,21 @@ using UnityEngine;
 //This'll be used to get the higher number for each side, which is the most accurate number of collision point that happened for each of the boundary box in a single physX tick.
 public class ContactPointCounts
 {
-    public int LeftSideCount = 0;
-    public int RightSideCount = 0;
-    public int UpSideCount = 0;
-    public int DownSideCount = 0;
+    public List <ContactPoint> LeftSideCount = new List<ContactPoint>();
+    public List <ContactPoint> RightSideCount = new List<ContactPoint>();
+    public List <ContactPoint> UpSideCount = new List<ContactPoint>();
+    public List <ContactPoint> DownSideCount = new List<ContactPoint>();
+    public List<ContactPoint> LowerLeftSideCount = new List<ContactPoint>();
+    public List<ContactPoint> LowerRightSideCount = new List<ContactPoint>();
 
     public float _highestX = 0f;
     public float _lowestX = 0f;
     public float _highestY = 0f;
     public float _lowestY = 0f;
+    public Vector2 _lowerLeft = Vector2.zero;
+    public Vector2 _lowerRight = Vector2.zero;
 
-    public ContactPointCounts (int up, int down, int left, int right, float highestX, float lowestX, float highestY, float lowestY)
+    public ContactPointCounts (List<ContactPoint> up, List<ContactPoint> down, List<ContactPoint> left, List<ContactPoint> right, float highestX, float lowestX, float highestY, float lowestY, Vector2 lowestGroundX, Vector2 highestGroundX)
     {
         LeftSideCount = left;
         RightSideCount = right;
@@ -27,6 +31,8 @@ public class ContactPointCounts
         _highestY = highestY;
         _lowestX = lowestX;
         _lowestY = lowestY;
+        _lowerLeft = lowestGroundX;
+        _lowerRight = highestGroundX;
     }
 }
 
@@ -48,6 +54,10 @@ public class CollisionTests : MonoBehaviour {
     public float _lowestContact;
     public float _leftMostContact;
     public float _rightMostContact;
+    public float _leftMostGroundContact = 0f;
+    public float _rightMostGroundContact = 0f;
+
+    public float touchedGroundSurfaceLength = 0f;
 
     // Use this for initialization
     void Start ()
@@ -67,38 +77,48 @@ public class CollisionTests : MonoBehaviour {
 
     void UpdateCollision (Collision collision)
     {
-        int LeftSideCount = 0;
-        int RightSideCount = 0;
-        int UpSideCount = 0;
-        int DownSideCount = 0;
+        List <ContactPoint> LeftSideCount = new List<ContactPoint>();
+        List<ContactPoint> RightSideCount = new List<ContactPoint>();
+        List<ContactPoint> UpSideCount = new List<ContactPoint>();
+        List<ContactPoint> DownSideCount = new List<ContactPoint>();
 
-        collidedObjects.Add(collision.collider);
+    collidedObjects.Add(collision.collider);
 
         float highestContact = thisCollider.bounds.min.y;
         float lowestContact = thisCollider.bounds.max.y;
         float leftMostContact = thisCollider.bounds.max.x;
         float rightMostContact = thisCollider.bounds.min.x;
+        Vector2 LowerLeftContact = new Vector2(leftMostContact, lowestContact);
+        Vector2 LowerRightContact = new Vector2(rightMostContact, lowestContact);
 
         foreach (ContactPoint contact in collision.contacts)
         {
+            //Debug.DrawLine(thisCollider.bounds.center, contact.point, Color.red);
+
             if (contact.point.y >= thisCollider.bounds.min.y + (thisCollider.bounds.size.y * .9f))
             {
-                UpSideCount++;
+                UpSideCount.Add (contact);
             }
 
             if (contact.point.y <= thisCollider.bounds.max.y - (thisCollider.bounds.size.y * .9f))
             {
-                DownSideCount++;
+                DownSideCount.Add(contact);
+
+                if (contact.point.x < LowerLeftContact.x)
+                    LowerLeftContact = contact.point;
+
+                if (contact.point.x > LowerRightContact.x)
+                    LowerRightContact = contact.point;
             }
 
             if (contact.point.x <= thisCollider.bounds.max.x - (thisCollider.bounds.size.x * .9f))
             {
-                LeftSideCount++;
+                LeftSideCount.Add(contact);
             }
 
             if (contact.point.x >= thisCollider.bounds.min.x + (thisCollider.bounds.size.x * .9f))
             {
-                RightSideCount++;
+                RightSideCount.Add(contact);
             }
 
             if (contact.point.y > highestContact)
@@ -112,13 +132,27 @@ public class CollisionTests : MonoBehaviour {
 
             if (contact.point.x < leftMostContact)
                 leftMostContact = contact.point.x;
+
+            /*if (contact.point.y < LowerLeftContact.y && contact.point.x < LowerLeftContact.x)
+                LowerLeftContact = contact.point;
+
+            if (contact.point.y < LowerRightContact.y && contact.point.x > LowerRightContact.x)
+                LowerRightContact = contact.point;*/
         }
 
         if (!uniqueCollisions.ContainsKey(collision.gameObject))
         {
             uniqueCollisions.Add(collision.gameObject, new ContactPointCounts(UpSideCount, DownSideCount, LeftSideCount, RightSideCount,
-                rightMostContact, leftMostContact, highestContact, lowestContact));
+                rightMostContact, leftMostContact, highestContact, lowestContact, LowerLeftContact, LowerRightContact));
         }
+
+        //DEBUG STUFF
+        /*if (LowerLeftContact.x > thisCollider.bounds.min.x)
+            Debug.Log("Not touching left side I guess... " + transform.name + "Left Most Contact " + leftMostContact + " Left Most Ground Contact = " + LowerLeftContact.x + 
+                " & bounds min x = " + thisCollider.bounds.min.x + " & downside count = " + DownSideCount.Count);*/
+
+        Debug.Log("Left = " + LowerLeftContact.x + " Right = " + LowerRightContact.x + " Real min pos = " + thisCollider.bounds.min.x + " Surface touched = " + Mathf.Abs(LowerLeftContact.x - LowerRightContact.x) + " real size = " + thisCollider.bounds.size.x);
+        //TODO : Almost working, it just acts weird if you get stuck in a wall on the right...
     }
 
     public void GetRealContactPointsCount ()
@@ -127,35 +161,38 @@ public class CollisionTests : MonoBehaviour {
         MaxDownSideCount = 0;
         MaxLeftSideCount = 0;
         MaxRightSideCount = 0;
+        MaxRightSideCount = 0;
 
         _highestContact = thisCollider.bounds.min.y;
         _lowestContact = thisCollider.bounds.max.y;
         _leftMostContact = thisCollider.bounds.max.x;
         _rightMostContact = thisCollider.bounds.min.x;
+        _leftMostGroundContact = _leftMostContact;
+        _rightMostGroundContact = _rightMostContact;
 
         //Debug.Log("Collision happened in the latest tick = " + uniqueCollisions.Count);
 
         int iterator = 0;
         foreach (KeyValuePair<GameObject,ContactPointCounts> collision in uniqueCollisions)
         {
-            if (collision.Value.UpSideCount > MaxUpSideCount)
+            if (collision.Value.UpSideCount.Count > MaxUpSideCount)
             {
-                MaxUpSideCount = collision.Value.UpSideCount;
+                MaxUpSideCount = collision.Value.UpSideCount.Count;
             }
 
-            if (collision.Value.DownSideCount > MaxDownSideCount)
+            if (collision.Value.DownSideCount.Count > MaxDownSideCount)
             {
-                MaxDownSideCount = collision.Value.DownSideCount;
+                MaxDownSideCount = collision.Value.DownSideCount.Count;
             }
 
-            if (collision.Value.LeftSideCount > MaxLeftSideCount)
+            if (collision.Value.LeftSideCount.Count > MaxLeftSideCount)
             {
-                MaxLeftSideCount = collision.Value.LeftSideCount;
+                MaxLeftSideCount = collision.Value.LeftSideCount.Count;
             }
 
-            if (collision.Value.RightSideCount > MaxRightSideCount)
+            if (collision.Value.RightSideCount.Count > MaxRightSideCount)
             {
-                MaxRightSideCount = collision.Value.RightSideCount;
+                MaxRightSideCount = collision.Value.RightSideCount.Count;
             }
 
             if (collision.Value._highestY > _highestContact)
@@ -170,11 +207,18 @@ public class CollisionTests : MonoBehaviour {
             if (collision.Value._lowestX < _leftMostContact)
                 _leftMostContact = collision.Value._lowestX;
 
+            /*if (collision.Value._lowestGroundX < _leftMostGroundContact)
+                _leftMostGroundContact = collision.Value._lowestGroundX;
+
+            if (collision.Value._lowestGroundX > _rightMostGroundContact)
+                _rightMostGroundContact = collision.Value._HighestGroundX;*/
+
             iterator++;
         }
 
         yHighestDiff = Mathf.Abs (_lowestContact - _highestContact);
         xHighestDiff = Mathf.Abs (_leftMostContact - _rightMostContact);
+        touchedGroundSurfaceLength = Mathf.Abs(_leftMostGroundContact - _rightMostGroundContact);
 
         //If the highest diff between the different contact points is too low, let's ignore it. EXCEPT if this is a slope.
         if (yHighestDiff <= .05f)
@@ -199,8 +243,8 @@ public class CollisionTests : MonoBehaviour {
         #region Debugging Stuff
         //Debug.Log("LeftMost = " + _leftMostContact);
         //Debug.Log("RightMost = " + _rightMostContact);
-        //Debug.DrawLine(new Vector3(_leftMostContact, _highestContact, transform.position.z), new Vector3(_rightMostContact, _lowestContact, transform.position.z), Color.red);
-
+        Debug.DrawLine(new Vector3(_leftMostContact, _highestContact, transform.position.z), new Vector3(_rightMostContact, _lowestContact, transform.position.z), Color.red);
+        Debug.DrawLine(thisCollider.bounds.center, new Vector3(_leftMostGroundContact, thisCollider.bounds.min.y, transform.position.z), Color.cyan);
 
         //DEBUG
         /*Debug.Log("Previous physic time tick collider count = " + uniqueCollisions.Count);

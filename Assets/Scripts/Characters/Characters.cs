@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class Characters : MonoBehaviour {
@@ -189,6 +190,8 @@ public class Characters : MonoBehaviour {
 
         if (OnSlope) //If the character is on a slope, then its direction should be deviated accordingly
         {
+            Debug.Log(transform.name + " IS ON SLOOOOPE");
+
             slopeDirection = new Vector3(-hit.normal.y, hit.normal.x, 0f) / Mathf.Sqrt((hit.normal.x * hit.normal.x) + (hit.normal.y * hit.normal.y));
 
             if (HorizontalDirection < 0)
@@ -389,6 +392,13 @@ public class Characters : MonoBehaviour {
         if (moveDirection.y >= 0 && jumping)
             return false;
 
+        //Debug.Log (transform.position + " leftmostGround & RightMostGround = " + collisionTests._leftMostGroundContact)
+
+        /*if (Mathf.Abs (collisionTests._leftMostGroundContact - thisCollider.bounds.min.x) > .01f)
+            Debug.Log(transform.name + " Not Touching LeftMost Ground");*/
+
+        //Debug.Log(transform.name + " Left Most Ground Contact = " + collisionTests._leftMostGroundContact + " & bounds min x = " + thisCollider.bounds.min.x);
+
         if (collisionTests.MaxDownSideCount >= 4 && collisionTests.xHighestDiff >= .01f
             || OnStep)
         //TODO: Replace the .01f to a percentage of Pauline's collider width, just in case we modify the collider's width and this gets broken
@@ -449,20 +459,33 @@ public class Characters : MonoBehaviour {
         ray.Add(new Ray(thisCollider.bounds.min, -transform.right));
         ray.Add(new Ray(new Vector3(thisCollider.bounds.max.x, thisCollider.bounds.min.y, transform.position.z), transform.right));
 
-        /*float RayRange = .1f;
-
-        if (CheckIfGrounded() && !OnSlope)
-            RayRange = Mathf.Infinity;*/
+        float RayRange = .1f;
 
         foreach (Ray singleRay in ray)
         {
             //Debug.DrawRay(thisCollider.bounds.min, -transform.right, Color.cyan);
-            if (Physics.Raycast(singleRay, out hit, .1f))
+            if (Physics.Raycast(singleRay, out hit, RayRange))
             {
+                Debug.DrawRay(singleRay.origin, singleRay.direction * RayRange, Color.black);
+
                 float NormalAngle = Vector3.Angle(transform.right, hit.normal);
                 if (Mathf.Abs(NormalAngle - 90) > .1f && Mathf.Abs(NormalAngle) > .1f && Mathf.Abs(NormalAngle - 180) > .1f)
                 {
                     OnSlope = true;
+
+                    /*Ray secondRay = new Ray();
+                    switch (ray.IndexOf(singleRay))
+                    {
+                        case 0:
+                            secondRay = ray[1];
+                            break;
+                        case 1:
+                            secondRay = ray[0];
+                            break;
+                    }
+
+                    Physics.Raycast(secondRay, out secondHit, .2f);*/
+
                     break;
                 }
                 else
@@ -471,6 +494,7 @@ public class Characters : MonoBehaviour {
             else
                 OnSlope = false;
         }
+
         return hit;
     }
 #endregion
