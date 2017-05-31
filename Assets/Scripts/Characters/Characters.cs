@@ -144,8 +144,8 @@ public class Characters : MonoBehaviour {
         public bool OnSlope = false;
         [HideInInspector]
         public Vector3 slopeDirection;
-        [HideInInspector]
-        public float SlopeAngle = 0f;
+        /*[HideInInspector]
+        public float SlopeAngle = 0f;*/
         [HideInInspector]
         public bool mirrorSlope = false;
     #endregion
@@ -236,7 +236,7 @@ public class Characters : MonoBehaviour {
 
                     if (collisions.climbingSlope)
                     {
-                        moveDirection.y = Mathf.Tan(collisions.slopeAngle * Mathf.Rad2Deg) * Mathf.Abs(moveDirection.x);
+                        moveDirection.y = Mathf.Tan(collisions.slopeAngle * Mathf.Deg2Rad) * Mathf.Abs(moveDirection.x);
                     }
 
                     collisions.left = directionX == -1;
