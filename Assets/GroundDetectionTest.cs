@@ -18,6 +18,8 @@ public class GroundDetectionTest : MonoBehaviour {
     bool previousTickOnSlope = false;
     bool previousTickOneSideGrounded = false;
 
+    public LayerMask ground;
+
 	// Use this for initialization
 	void Start () {
         thisRigidBody = gameObject.GetComponent<Rigidbody>();
@@ -35,7 +37,7 @@ public class GroundDetectionTest : MonoBehaviour {
         Ray leftRay = new Ray(new Vector3 (thisCollider.bounds.min.x, thisCollider.bounds.min.y + .1f, thisCollider.bounds.center.z), -transform.up);
         Ray rightRay = new Ray(new Vector3(thisCollider.bounds.max.x, thisCollider.bounds.min.y + .1f, thisCollider.bounds.center.z), -transform.up);
 
-        if (Physics.Raycast(leftRay, out leftHit, .15f))
+        if (Physics.Raycast(leftRay, out leftHit, .101f, ground))
         {
             //Debug.Log("Grounded on left");
             groundedOnLeft = true;

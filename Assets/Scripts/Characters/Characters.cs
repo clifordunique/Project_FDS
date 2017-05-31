@@ -15,10 +15,78 @@ public class Characters : MonoBehaviour {
     public float jumpStrength = 12f;
     [SerializeField]
     float minimumWallSize = .25f;
+    float skinWidth = .015f;
+    #endregion
+
+    #region Experimental
+    //Sebastian Lague on Youtube, kudos to his tuto!
+    [HideInInspector]
+    public RaycastOrigins raycastOrigins;
+
+    public int horizontalRayCount = 4;
+    public int verticalRayCount = 4;
+
+    float horizontalRaySpacing;
+    [HideInInspector]
+    public float verticalRaySpacing;
+    public LayerMask collisionMask;
+    public CollisionInfo collisions;
+    public float maxClimbAngle = 89;
+
+    public void UpdateRaycastOrigins()
+    {
+        Bounds bounds = thisCollider.bounds;
+        bounds.Expand(skinWidth * -2);
+
+        raycastOrigins.bottomLeft = new Vector3(bounds.min.x, bounds.min.y, bounds.center.z);
+        raycastOrigins.bottomRight = new Vector3(bounds.max.x, bounds.min.y, bounds.center.z);
+        raycastOrigins.topLeft = new Vector3(bounds.min.x, bounds.max.y, bounds.center.z);
+        raycastOrigins.topRight = new Vector3(bounds.max.x, bounds.max.y, bounds.center.z);
+
+        Debug.DrawLine(raycastOrigins.bottomLeft, raycastOrigins.topRight, Color.blue);
+        Debug.DrawLine(raycastOrigins.bottomRight, raycastOrigins.topLeft, Color.blue);
+    }
+
+    public void CalculateRaySpacing ()
+    {
+        Bounds bounds = thisCollider.bounds;
+        bounds.Expand(skinWidth * -2);
+
+        horizontalRayCount = Mathf.Clamp(horizontalRayCount, 2, int.MaxValue);
+        verticalRayCount = Mathf.Clamp(verticalRayCount, 2, int.MaxValue);
+
+        horizontalRaySpacing = bounds.size.y / (horizontalRayCount - 1);
+        verticalRaySpacing = bounds.size.x / (verticalRayCount - 1);
+    }
+
+    public struct RaycastOrigins
+    {
+        public Vector3 topLeft, topRight;
+        public Vector3 bottomLeft, bottomRight;
+    }
+
+    public struct CollisionInfo
+    {
+        public bool above, below;
+        public bool left, right;
+
+        public bool climbingSlope;
+        public float slopeAngle, slopeAnglePreviousTick;
+
+        public void Reset()
+        {
+            above = below = false;
+            left = right = false;
+            climbingSlope = false;
+
+            slopeAnglePreviousTick = slopeAngle;
+            slopeAngle = 0;
+        }
+    }
     #endregion
 
     #region Moves Vars
-        public Vector3 moveDirection;
+    public Vector3 moveDirection;
         private bool jumping;
         [HideInInspector]
         public bool deactivateNormalGravity = false;
@@ -100,9 +168,117 @@ public class Characters : MonoBehaviour {
 
     bool previousFrameOnSlope = false;
 
-    //Main Move Method
-    public void Move(float HorizontalDirection, float VerticalDirection, bool jump, bool dash)
+    void VerticalCollisions(ref Vector3 moveDirection)
     {
+        float directionY = Mathf.Sign(moveDirection.y);
+        float rayLength = Mathf.Abs(moveDirection.y) + skinWidth;
+
+        for (int i = 0; i < verticalRayCount; i++)
+        {
+            Vector3 rayOrigin = (directionY == -1) ? raycastOrigins.bottomLeft : raycastOrigins.topLeft;
+            rayOrigin += Vector3.right * (verticalRaySpacing * i + moveDirection.x);
+            RaycastHit hit;
+            Debug.DrawRay(rayOrigin, Vector3.up * directionY * rayLength, Color.red);
+
+            if (Physics.Raycast(rayOrigin, Vector3.up * directionY, out hit, rayLength,  collisionMask))
+            {
+                moveDirection.y = (hit.distance - skinWidth) * directionY;
+                rayLength = hit.distance;
+
+                if (collisions.climbingSlope)
+                {
+                    moveDirection.x = moveDirection.y / Mathf.Tan(collisions.slopeAngle * Mathf.Deg2Rad) * Mathf.Sign(moveDirection.x);
+                }
+
+                collisions.below = directionY == -1;
+                collisions.above = directionY == 1;
+            }
+        }
+    }
+
+    void HorizontalCollisions(ref Vector3 moveDirection)
+    {
+        float directionX = Mathf.Sign(moveDirection.x);
+        float rayLength = Mathf.Abs(moveDirection.x) + skinWidth;
+
+        if(Mathf.Abs(moveDirection.x) < skinWidth)
+        {
+            rayLength = 2 * skinWidth;
+        }
+
+        for (int i = 0; i < horizontalRayCount; i++)
+        {
+            Vector3 rayOrigin = (directionX == -1) ? raycastOrigins.bottomLeft : raycastOrigins.bottomRight;
+            rayOrigin += Vector3.up * (horizontalRaySpacing * i);
+            RaycastHit hit;
+            Debug.DrawRay(rayOrigin, Vector3.right * directionX * rayLength, Color.red);
+
+            if (Physics.Raycast(rayOrigin, Vector3.right * directionX, out hit, rayLength, collisionMask))
+            {
+                float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+
+                if (i == 0 && slopeAngle <= maxClimbAngle)
+                {
+                    float distanceToSlopeStart = 0f;
+                    if (slopeAngle != collisions.slopeAnglePreviousTick)
+                    {
+                        distanceToSlopeStart = hit.distance - skinWidth;
+                        moveDirection.x -= distanceToSlopeStart * directionX;
+                    }
+                    ClimbSlope(ref moveDirection, slopeAngle);
+                    moveDirection.x += distanceToSlopeStart * directionX;
+                }
+
+                if (!collisions.climbingSlope || slopeAngle > maxClimbAngle)
+                {
+                    moveDirection.x = (hit.distance - skinWidth) * directionX;
+                    rayLength = hit.distance;
+
+                    if (collisions.climbingSlope)
+                    {
+                        moveDirection.y = Mathf.Tan(collisions.slopeAngle * Mathf.Rad2Deg) * Mathf.Abs(moveDirection.x);
+                    }
+
+                    collisions.left = directionX == -1;
+                    collisions.right = directionX == 1;
+                }
+            }
+        }
+    }
+
+    void ClimbSlope (ref Vector3 moveDirection, float a_slopeAngle)
+    {
+        float moveDistance = Mathf.Abs(moveDirection.x);
+        float climbMoveDirectionY = Mathf.Sin(a_slopeAngle * Mathf.Deg2Rad) * moveDistance;
+
+        if (moveDirection.y <= climbMoveDirectionY)
+        {
+            moveDirection.y = climbMoveDirectionY;
+            moveDirection.x = Mathf.Cos(a_slopeAngle * Mathf.Deg2Rad) * moveDistance * Mathf.Sign(moveDirection.x);
+            collisions.below = true;
+            collisions.climbingSlope = true;
+            collisions.slopeAngle = a_slopeAngle;
+        }
+    }
+
+    //Main Move Method
+    public void Move(Vector3 a_moveDirection, bool jump, bool dash)
+    {
+        #region Experimental
+        UpdateRaycastOrigins();
+        collisions.Reset();
+
+        if (moveDirection.x != 0)
+            HorizontalCollisions(ref a_moveDirection);
+
+        if (moveDirection.y != 0)
+            VerticalCollisions(ref a_moveDirection);
+
+        transform.Translate(a_moveDirection);
+        #endregion
+
+        #region OldStuff
+        /*
         RaycastHit hit = SlopeDetection();
 
         if(!OnSlope && previousFrameOnSlope && !jump && !jumping) //Preventing Character from jumping off a slope when climbing it at full speed
@@ -220,6 +396,8 @@ public class Characters : MonoBehaviour {
         //This is used for some calculations, for the natural U-turn for example...
         previousTickHorizontalVelocity = thisRigidbody.velocity.x;
         previousTickVerticalVelocity = thisRigidbody.velocity.y;
+        */
+        #endregion
     }
 
     public bool CheckIfGotPastDropDownPlatform()
@@ -243,9 +421,14 @@ public class Characters : MonoBehaviour {
         Move(HorizontalDirection, 0, jump);
     }
 
+    public void Move(Vector3 a_moveDirection)
+    {
+        Move(a_moveDirection, false, false);
+    } 
+
     public void Move (float HorizontalDirection, float VerticalDirection, bool jump)
     {
-        Move(HorizontalDirection, VerticalDirection, jump, false);
+        Move (new Vector3 (HorizontalDirection, VerticalDirection, 0f), jump, false);
     }
 
 #region Other Moves
@@ -297,10 +480,12 @@ public class Characters : MonoBehaviour {
         }
     }
 
-    void ApplyGravity ()
+    public void ApplyGravity ()
     {
         ApplyGravity(sharedVariables.Gravity);
     }
+
+
 
     public void ApplyGravity (float gravityOverride)
     {

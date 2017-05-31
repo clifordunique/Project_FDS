@@ -55,6 +55,19 @@ public class Player : Characters {
         bool ClimbingLedge = false;
     #endregion
 
+    #region Experimental
+    [SerializeField]
+    float jumpHeight = 4;
+    [SerializeField]
+    float timeToJumpApex = .4f;
+    float calculatedJumpForce;
+    float calculatedGravity;
+    float velocityXSmoothing;
+
+    float accelerationTimeAir = .2f;
+    float accelerationTimeGrounded = .1f;
+    #endregion
+
     Transform mdr;
 
 
@@ -66,9 +79,16 @@ public class Player : Characters {
         standingColliderPos = gameObject.GetComponent<BoxCollider>().center;
         mdr = transform.Find("mdr");
         mdr.gameObject.SetActive(false);
+
+        #region experimental
+        CalculateRaySpacing();
+
+        calculatedGravity = -(2 * jumpHeight) / Mathf.Pow(timeToJumpApex, 2);
+        calculatedJumpForce = Mathf.Abs(calculatedGravity) * timeToJumpApex;
+        #endregion
     }
 
-    void FixedUpdate ()
+    /*void FixedUpdate ()
     {
         collisionTests.GetRealContactPointsCount();
 
@@ -109,10 +129,36 @@ public class Player : Characters {
         //Check for the ledge grab
         LedgeGrabCheck();
 
-	}
+	}*/
 
     private void Update()
     {
+        #region Experimental
+
+
+        Vector3 input = new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
+
+        if (Input.GetButtonDown ("Jump") && collisions.below)
+        {
+            moveDirection.y = calculatedJumpForce;
+        }
+
+        float targetVelocityX = input.x * speed;
+        moveDirection.x = Mathf.SmoothDamp(moveDirection.x, targetVelocityX, ref velocityXSmoothing, collisions.below ? accelerationTimeGrounded : accelerationTimeAir);
+        moveDirection.y += calculatedGravity * Time.deltaTime;
+        //ApplyGravity();
+
+
+
+        Move(moveDirection * Time.deltaTime);
+
+        if (collisions.above || collisions.below)
+        {
+            moveDirection.y = 0;
+        }
+        #endregion
+
+        /*
         //Input.GetButtonDown("Jump") = Input.GetButtonDown("Input.GetButtonDown("Jump")");
         UpdateAnimator();
         jump = Input.GetButtonDown("Jump");
@@ -139,10 +185,10 @@ public class Player : Characters {
         if (dashAttachment != null)
         {
             thisSprite.flipX = dashAttachment.GetComponentInParent<SpriteRenderer>().flipX;
-        }
+        }*/
     }
 
-    private void LateUpdate()
+    /*private void LateUpdate()
     {
         //Debug.Log("Dash Attachment = " + dashAttachment);
         if (dashing)
@@ -181,7 +227,7 @@ public class Player : Characters {
                 StartRegularDash();
             }
         }
-    }
+    }*/
 
     void PostGrabDetach ()
     {

@@ -55,18 +55,18 @@ public class Enemy : Characters {
             switch (currentBehaviour)
             {
                 case BehaviourStates.Patrol:
-                    Patrol();
+                    //Patrol();
                     ExclamationPoint.gameObject.SetActive(false);
                     QuestionMark.gameObject.SetActive(false);
                     break;
                 case BehaviourStates.Chase:
-                    Chase();
+                    //Chase();
                     ExclamationPoint.gameObject.SetActive(true);
                     QuestionMark.gameObject.SetActive(false);
                     //Debug.Log(transform.name + " chasing");
                     break;
                 case BehaviourStates.LostTrack:
-                    GoToLastKnownPosition();
+                    //GoToLastKnownPosition();
                     searchForPlayerTimer += Time.deltaTime;
 
                     ExclamationPoint.gameObject.SetActive(false);
@@ -83,7 +83,7 @@ public class Enemy : Characters {
             }
         }
         else
-            Move(0, 0, false, false);
+            Move(Vector3.zero);
     }
 
     public void ReEnergize ()

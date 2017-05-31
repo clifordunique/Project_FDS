@@ -83,7 +83,7 @@ public class Enemy_Rabbot : Characters {
             }
         }
         else
-            Move(0, 0, false, false);
+            Move(Vector3.zero);
     }
 
     public void ReEnergize ()

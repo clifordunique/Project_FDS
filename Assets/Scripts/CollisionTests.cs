@@ -151,7 +151,7 @@ public class CollisionTests : MonoBehaviour {
             Debug.Log("Not touching left side I guess... " + transform.name + "Left Most Contact " + leftMostContact + " Left Most Ground Contact = " + LowerLeftContact.x + 
                 " & bounds min x = " + thisCollider.bounds.min.x + " & downside count = " + DownSideCount.Count);*/
 
-        Debug.Log("Left = " + LowerLeftContact.x + " Right = " + LowerRightContact.x + " Real min pos = " + thisCollider.bounds.min.x + " Surface touched = " + Mathf.Abs(LowerLeftContact.x - LowerRightContact.x) + " real size = " + thisCollider.bounds.size.x);
+        //Debug.Log("Left = " + LowerLeftContact.x + " Right = " + LowerRightContact.x + " Real min pos = " + thisCollider.bounds.min.x + " Surface touched = " + Mathf.Abs(LowerLeftContact.x - LowerRightContact.x) + " real size = " + thisCollider.bounds.size.x);
         //TODO : Almost working, it just acts weird if you get stuck in a wall on the right...
     }
 
@@ -243,8 +243,8 @@ public class CollisionTests : MonoBehaviour {
         #region Debugging Stuff
         //Debug.Log("LeftMost = " + _leftMostContact);
         //Debug.Log("RightMost = " + _rightMostContact);
-        Debug.DrawLine(new Vector3(_leftMostContact, _highestContact, transform.position.z), new Vector3(_rightMostContact, _lowestContact, transform.position.z), Color.red);
-        Debug.DrawLine(thisCollider.bounds.center, new Vector3(_leftMostGroundContact, thisCollider.bounds.min.y, transform.position.z), Color.cyan);
+        //Debug.DrawLine(new Vector3(_leftMostContact, _highestContact, transform.position.z), new Vector3(_rightMostContact, _lowestContact, transform.position.z), Color.red);
+        //Debug.DrawLine(thisCollider.bounds.center, new Vector3(_leftMostGroundContact, thisCollider.bounds.min.y, transform.position.z), Color.cyan);
 
         //DEBUG
         /*Debug.Log("Previous physic time tick collider count = " + uniqueCollisions.Count);
