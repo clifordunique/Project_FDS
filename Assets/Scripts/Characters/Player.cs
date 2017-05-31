@@ -136,12 +136,17 @@ public class Player : Characters {
     private void Update()
     {
         #region Experimental
+        UpdateAnimator();
+
         jump = Input.GetButtonDown("Jump");
 
         if (!swallJmuping)
             input = new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
-
+        if (input.y < 0 && collisions.below)
+            Crouch();
+        else
+            Stand();
 
         if (jump && collisions.below)
         {
@@ -169,12 +174,37 @@ public class Player : Characters {
             Debug.Log("DRAG");
         }
 
+        if (Input.GetButtonDown("Dash") && !dashing && !alreadyDashedInAir)
+        {
+            //Debug.Log("Dash Button Pressed...");
+            if (canDashFromAttachment)
+            {
+                PostGrabDetach();
+                StartDashFromAttachment();
+            }
+            else if (!swallJmuping)
+            {
+                //Debug.Log("... from nothing");
+                StartRegularDash();
+            }
+        }
+
         Move(_moveDirection * Time.deltaTime);
 
-        if (collisions.above || collisions.below)
+        if (collisions.above || collisions.below || dashing)
         {
             _moveDirection.y = 0;
         }
+
+        if (!dashing) //Dashing cooldown
+        {
+            dashCoolDownTimer += Time.deltaTime;
+
+            if (dashCoolDownTimer > dashCoolDown)
+                dashCoolDownTimer = dashCoolDown;
+        }
+        else
+            ContinueDash();
         #endregion
 
         /*
@@ -192,13 +222,7 @@ public class Player : Characters {
             alreadyDashedInAir = false;
         }
 
-        if (!dashing)
-        {
-            dashCoolDownTimer += Time.deltaTime;
 
-            if (dashCoolDownTimer > dashCoolDown)
-                dashCoolDownTimer = dashCoolDown;
-        }
 
         //If attached to an enemy after a dash
         if (dashAttachment != null)
@@ -267,7 +291,6 @@ public class Player : Characters {
     {
         if ((collisions.left || collisions.right) && !collisions.below)
         {
-            Debug.Log("Ready to swall jmup");
             MaxWallSlideSpeed = 1.8f;
 
             if (jump && !justJumped)
@@ -276,12 +299,12 @@ public class Player : Characters {
                 if (collisions.left)
                 {
                     swallJmupDirection = 1;
-                    thisSprite.flipX = false;
+                    //thisSprite.flipX = false;
                 }
                 else if (collisions.right)
                 {
                     swallJmupDirection = -1;
-                    thisSprite.flipX = true;
+                    //thisSprite.flipX = true;
                 }
 
                 swallJmupTimer = 0f;
@@ -305,7 +328,6 @@ public class Player : Characters {
             swallJmupTimer += Time.deltaTime;
             input.x = swallJmupDirection;
             Debug.Log("Swall Jmuping");
-            swallJmuping = true;
             jump = false;
             mdr.gameObject.SetActive(true);
         }
@@ -327,10 +349,12 @@ public class Player : Characters {
         thisCollider.GetComponent<BoxCollider>().center = new Vector3(0, -0.8156404f, 0);
         thisCollider.GetComponent<BoxCollider>().size = new Vector3(.43f, 0.4187193f, .2f);
 
-        if (OnSlope)
+        if (collisions.climbingSlope || collisions.descendingSlope)
         {
             //Debug.Log("Pauline Sprite Rotation Euler = " + thisSprite.transform.eulerAngles + " & Slope Angle = " + SlopeAngle);
             //thisSprite.transform.rotation = new Quaternion(thisSprite.transform.rotation.x, thisSprite.transform.rotation.y, -SlopeAngle, thisSprite.transform.rotation.w);
+            //Debug.Log(collisions.slopeAngle);
+            //TODO : Fix this with the new slope detection system
             if(!mirrorSlope)
                 thisSprite.transform.eulerAngles = new Vector3(thisSprite.transform.eulerAngles.x, thisSprite.transform.eulerAngles.y, -collisions.slopeAngle);
             else
@@ -384,10 +408,10 @@ public class Player : Characters {
         //Debug.Log("Start regular Dash");
         dashTimer = 0f;
 
-        if (dashTimer <= dashDuration && dashCoolDownTimer >= dashCoolDown)
+        if (!dashing && dashCoolDownTimer >= dashCoolDown)
         {
 
-            dashDirection = new Vector3(Input.GetAxisRaw("Horizontal"), 0, 0);
+            dashDirection = new Vector3(input.x, 0, 0);
 
             if (Mathf.Abs(dashDirection.x) < .5f)
             {
@@ -413,15 +437,16 @@ public class Player : Characters {
         //Continuity of dash
         //Debug.Log("Dashing");
         dashTimer += Time.deltaTime;
-        thisRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+        //thisRigidbody.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
         //Dash can be pretty fast, so it's better to use ContinuousDynamic to prevent some noclip glitches.
 
-        thisRigidbody.velocity = dashDirection * dashSpeed;
-        MomentumOnJump = thisRigidbody.velocity.x; //To make sure Pauline will face the right way when a dash is ending in midair
+        _moveDirection = dashDirection * dashSpeed;
+        //MomentumOnJump = thisRigidbody.velocity.x; //To make sure Pauline will face the right way when a dash is ending in midair
 
         //Finish Dash
         if (dashTimer > dashDuration)
         {
+            Debug.Log("Finishing dash");
             StopAndResetDashNGrab(false);
         }
     }
@@ -486,11 +511,11 @@ public class Player : Characters {
 
     public void StopAndResetDashNGrab (bool calledByEnemy)
     {
-        //Debug.Log("Finished dash with timer = " + dashTimer + " called by enemy = " + calledByEnemy);
+        Debug.Log("Finished dash with timer = " + dashTimer + " called by enemy = " + calledByEnemy);
         dashing = false;
         dashCoolDownTimer = 0f;
         dashTimer = 0f;
-        thisRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
+        //thisRigidbody.collisionDetectionMode = CollisionDetectionMode.Discrete;
         alreadyDashedInAir = false;
         //The rest of the time, a ContinuousDynamic detection mode can result in the player getting stuck. Besides, it's pretty expensive, so we switch back do Discrete detection.
     }

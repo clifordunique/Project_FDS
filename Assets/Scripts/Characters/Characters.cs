@@ -337,7 +337,10 @@ public class Characters : MonoBehaviour {
 
         Debug.DrawRay(transform.position, -a_moveDirection, Color.green);
 
-
+        if (a_moveDirection.x < 0)
+            thisSprite.flipX = true;
+        else if (a_moveDirection.x > 0)
+            thisSprite.flipX = false;
 
         transform.Translate(a_moveDirection);
         #endregion
