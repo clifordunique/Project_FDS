@@ -131,24 +131,43 @@ public class Player : Characters {
 
 	}*/
 
+    Vector3 input;
+
     private void Update()
     {
         #region Experimental
+        jump = Input.GetButtonDown("Jump");
+
+        if (!swallJmuping)
+            input = new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
 
-        Vector3 input = new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
-        if (Input.GetButtonDown ("Jump") && collisions.below)
+        if (jump && collisions.below)
         {
             _moveDirection.y = calculatedJumpForce;
         }
 
         float targetVelocityX = input.x * speed;
-        _moveDirection.x = Mathf.SmoothDamp(_moveDirection.x, targetVelocityX, ref velocityXSmoothing, collisions.below ? accelerationTimeGrounded : accelerationTimeAir);
+
+        if (!swallJmuping)
+            _moveDirection.x = Mathf.SmoothDamp(_moveDirection.x, targetVelocityX, ref velocityXSmoothing, collisions.below ? accelerationTimeGrounded : accelerationTimeAir);
+        else
+            _moveDirection.x = targetVelocityX;
+
         _moveDirection.y += calculatedGravity * Time.deltaTime;
         //ApplyGravity();
 
+        if (!swallJmuping)
+            CheckForSwallJmup();
+        else
+            ContinueSwallJmup();
 
+        if (_moveDirection.y < 0 && MaxWallSlideSpeed != 0)
+        {
+            _moveDirection.y = -MaxWallSlideSpeed;
+            Debug.Log("DRAG");
+        }
 
         Move(_moveDirection * Time.deltaTime);
 
@@ -246,26 +265,27 @@ public class Player : Characters {
 
     void CheckForSwallJmup ()
     {
-        if ((TouchingWallOnRight() || TouchingWallOnLeft()) && Mathf.Abs(collisionTests.yHighestDiff) > minimumHeightTouchForSwallJmup && !CheckIfGrounded())
+        if ((collisions.left || collisions.right) && !collisions.below)
         {
-            FallDragMultiplier = 1.05f;
+            Debug.Log("Ready to swall jmup");
+            MaxWallSlideSpeed = 1.8f;
 
             if (jump && !justJumped)
             {
-                FallDragMultiplier = 0f;
-                if (TouchingWallOnLeft())
+                MaxWallSlideSpeed = 0f;
+                if (collisions.left)
                 {
                     swallJmupDirection = 1;
                     thisSprite.flipX = false;
                 }
-                else if (TouchingWallOnRight())
+                else if (collisions.right)
                 {
                     swallJmupDirection = -1;
                     thisSprite.flipX = true;
                 }
 
                 swallJmupTimer = 0f;
-                _moveDirection.y = jumpStrength;
+                _moveDirection.y = calculatedJumpForce;
                 swallJmuping = true;
                 jump = false;
             }
@@ -273,7 +293,7 @@ public class Player : Characters {
         }
         else
         {
-            FallDragMultiplier = 0f;
+            MaxWallSlideSpeed = 0f;
             //deactivateNormalGravity = false;
         }
     }
@@ -283,7 +303,7 @@ public class Player : Characters {
         if (swallJmupTimer < swallJmupDuration)
         {
             swallJmupTimer += Time.deltaTime;
-            Move(swallJmupDirection, false);
+            input.x = swallJmupDirection;
             Debug.Log("Swall Jmuping");
             swallJmuping = true;
             jump = false;
@@ -408,7 +428,7 @@ public class Player : Characters {
 
     void LedgeGrabCheck ()
     {
-        if (!CheckIfGrounded() &&
+        if (!collisions.below &&
         ((collisionTests.MaxRightSideCount >= 4 && !thisSprite.flipX) ||
         (collisionTests.MaxLeftSideCount >= 4 && thisSprite.flipX)))
         {
@@ -443,7 +463,7 @@ public class Player : Characters {
 
         if (Input.GetButtonDown("Jump")) //Cancelling Ledge Grab with a wall jump
         {
-            FallDragMultiplier = 0f;
+            MaxWallSlideSpeed = 0f;
             if (thisSprite.flipX)
             {
                 swallJmupDirection = 1;
@@ -456,7 +476,7 @@ public class Player : Characters {
             }
 
             swallJmupTimer = 0f;
-            _moveDirection.y = jumpStrength;
+            _moveDirection.y = calculatedJumpForce;
             swallJmuping = true;
             jump = false;
 

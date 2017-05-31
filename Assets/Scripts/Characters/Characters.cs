@@ -10,11 +10,6 @@ public class Characters : MonoBehaviour {
 
     #region Inspector Variables
     public float speed = 10;
-    [SerializeField]
-    float jumpMomentumInfluenceRate = .1f;
-    public float jumpStrength = 12f;
-    [SerializeField]
-    float minimumWallSize = .25f;
     float skinWidth = .015f;
     #endregion
 
@@ -74,6 +69,7 @@ public class Characters : MonoBehaviour {
         public bool climbingSlope;
         public bool descendingSlope;
         public float slopeAngle, slopeAnglePreviousTick;
+        public Vector3 moveDirPreviousTick;
 
         public void Reset()
         {
@@ -100,7 +96,7 @@ public class Characters : MonoBehaviour {
         float previousTickHorizontalVelocity = 0f;
         float previousTickVerticalVelocity = 0f;
     [HideInInspector]
-    public float FallDragMultiplier = 0f;
+    public float MaxWallSlideSpeed = 0f;
 
         //Brakes Vars
         bool braking = false;
@@ -242,6 +238,11 @@ public class Characters : MonoBehaviour {
 
                 if (i == 0 && slopeAngle <= maxClimbAngle)
                 {
+                    if(collisions.descendingSlope)
+                    {
+                        collisions.descendingSlope = false;
+                        moveDirection = collisions.moveDirPreviousTick;
+                    }
                     float distanceToSlopeStart = 0f;
                     if (slopeAngle != collisions.slopeAnglePreviousTick)
                     {
@@ -321,6 +322,7 @@ public class Characters : MonoBehaviour {
         UpdateRaycastOrigins();
 
         collisions.Reset();
+        collisions.moveDirPreviousTick = a_moveDirection;
 
         if(a_moveDirection.y < 0)
         {
@@ -334,6 +336,8 @@ public class Characters : MonoBehaviour {
             VerticalCollisions(ref a_moveDirection);
 
         Debug.DrawRay(transform.position, -a_moveDirection, Color.green);
+
+
 
         transform.Translate(a_moveDirection);
         #endregion
@@ -507,7 +511,7 @@ public class Characters : MonoBehaviour {
                 if ((velocityHistory[0] > 0 && _moveDirection.x < 0)
                     || (velocityHistory[0] < 0 && _moveDirection.x > 0))
                 {
-                    if(CheckIfGrounded())
+                    if(collisions.below)
                         braking = true;
                 }
         }
@@ -553,18 +557,6 @@ public class Characters : MonoBehaviour {
         _moveDirection.y -= gravityOverride * Time.deltaTime;
     }
 
-    void AirControl (float MomentumInfluenceBaseRate)
-    {
-        //MomentumOnJump = 0;
-        //MomentumInfluenceBaseRate = 0;
-
-        if (MomentumInfluenceBaseRate != 0) //This check is to prevent the character to just stop the momentum in middle-air
-            MomentumOnJump = Mathf.Lerp(previousTickHorizontalVelocity, MomentumInfluenceBaseRate * speed, jumpMomentumInfluenceRate);
-
-        _moveDirection.x = MomentumOnJump;
-        _moveDirection.x = Mathf.Clamp(_moveDirection.x, -speed, speed);
-    }
-
     public void CancelJump ()
     {
         jumping = false;
@@ -573,89 +565,10 @@ public class Characters : MonoBehaviour {
 #endregion
 
 #region Collision processing Methods
-    bool TouchingHead()
-    {
-        if (collisionTests.MaxUpSideCount >= 4)
-            return true;
-        else
-            return false;
-    }
-
-    public bool TouchingWallOnLeft()
-    {
-        if (collisionTests.MaxLeftSideCount >= 4)
-        {
-
-            //The vertical cast will check the step's height
-            //The horizontal cast is there to double-check if the vertical cast origin point was inside a collider.
-            RaycastHit verticalHit;
-            RaycastHit horizontalHit;
-
-            Vector3 verticalRaycastOrigin = new Vector3(thisCollider.bounds.min.x - .05f, thisCollider.bounds.max.y, transform.position.z);
-            Vector3 horizontalRaycastOrigin = new Vector3(thisCollider.bounds.max.x - .05f, thisCollider.bounds.max.y - .05f, transform.position.z);
-            Vector3 horizontalRayCastDirection = verticalRaycastOrigin - horizontalRaycastOrigin;
-            float horizontalRaycastDistance = horizontalRayCastDirection.magnitude;
-
-            //Raycasting the vertical cast
-            Physics.Raycast(verticalRaycastOrigin, -transform.up, out verticalHit, Mathf.Infinity);
-            //Debug.DrawRay(horizontalRaycastOrigin, horizontalRayCastDirection * horizontalRaycastDistance, Color.blue);
-
-            //If the horizontal cast hits something, then it is a wall, let's return true.
-            if (Physics.Raycast(horizontalRaycastOrigin, horizontalRayCastDirection, out horizontalHit, horizontalRaycastDistance))
-            {
-                //Debug.Log("HorizontalHit = " + horizontalHit.collider.gameObject.name);
-                return true;
-            }
-            else
-                return false;
-        }
-        else //Not enough contact point on Pauline's side, so we return immediately false without any more verifications
-        {
-            //Debug.Log("Not touching left wall because MaxLeftSideCount is " + collisionTests.MaxLeftSideCount);
-            return false;
-        }
-    }
-
-    public bool TouchingWallOnRight() //TODO: is there a reason the left wall detection has more stuff? Plz investigate and clean up.
-    {
-        if (collisionTests.MaxRightSideCount >= 4 && collisionTests.yHighestDiff >= minimumWallSize)
-            //TODO: Replace minimumWallSize with a percentage of Pauline's collider height for better control
-            return true;
-        else
-            return false;
-    }
 
     void ClimbSmallStep(float stepHeight)
     {
         transform.position += Vector3.up * (Mathf.Abs(stepHeight) + .05f);
-    }
-
-    public bool CheckIfGrounded()
-    {
-        if (OnSlope)
-            return true;
-
-        if (_moveDirection.y >= 0 && jumping)
-            return false;
-
-        //Debug.Log (transform.position + " leftmostGround & RightMostGround = " + collisionTests._leftMostGroundContact)
-
-        /*if (Mathf.Abs (collisionTests._leftMostGroundContact - thisCollider.bounds.min.x) > .01f)
-            Debug.Log(transform.name + " Not Touching LeftMost Ground");*/
-
-        //Debug.Log(transform.name + " Left Most Ground Contact = " + collisionTests._leftMostGroundContact + " & bounds min x = " + thisCollider.bounds.min.x);
-
-        if (collisionTests.MaxDownSideCount >= 4 && collisionTests.xHighestDiff >= .01f
-            || OnStep)
-        //TODO: Replace the .01f to a percentage of Pauline's collider width, just in case we modify the collider's width and this gets broken
-        {
-            //Debug.Log(transform.name + " is Grounded");
-            return true;
-        }
-        else
-        {
-            return false;
-        }
     }
 
     public Collider CheckIfGroundedInDropDownPlatform ()
@@ -672,7 +585,6 @@ public class Characters : MonoBehaviour {
         }
         else
             return null;
-
     }
 
     public Collider CheckIfHeadTouchingDropDownPlatform()

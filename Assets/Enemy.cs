@@ -46,7 +46,7 @@ public class Enemy : Characters {
 	// Update is called once per frame
 	void FixedUpdate ()
     {
-        collisionTests.GetRealContactPointsCount();
+        //collisionTests.GetRealContactPointsCount();
         //jump = Input.GetButtonDown("Jump");
 
         if (!player.dashAttachment == grabbedScript.gameObject && energized)
