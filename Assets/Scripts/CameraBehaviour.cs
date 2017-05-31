@@ -77,7 +77,7 @@ public class CameraBehaviour : MonoBehaviour {
         }
 
         //Tracking the current velocity of the player. If it's at more than 90% of its maximum speed, we'll trigger the maximum horizontal speed for the Camera horizontal aligment.
-        if (Mathf.Abs(player.GetComponent<Player>().moveDirection.x) >= playerScript.speed * .9f)
+        if (Mathf.Abs(player.GetComponent<Player>()._moveDirection.x) >= playerScript.speed * .9f)
         {
             MaxSpeedMomentumPercent += Time.deltaTime * MomentumRate;
         }

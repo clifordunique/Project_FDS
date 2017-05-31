@@ -31,7 +31,8 @@ public class Characters : MonoBehaviour {
     public float verticalRaySpacing;
     public LayerMask collisionMask;
     public CollisionInfo collisions;
-    public float maxClimbAngle = 89;
+    public float maxClimbAngle = 89f;
+    float maxDescendAngle = 75f;
 
     public void UpdateRaycastOrigins()
     {
@@ -71,6 +72,7 @@ public class Characters : MonoBehaviour {
         public bool left, right;
 
         public bool climbingSlope;
+        public bool descendingSlope;
         public float slopeAngle, slopeAnglePreviousTick;
 
         public void Reset()
@@ -78,6 +80,7 @@ public class Characters : MonoBehaviour {
             above = below = false;
             left = right = false;
             climbingSlope = false;
+            descendingSlope = false;
 
             slopeAnglePreviousTick = slopeAngle;
             slopeAngle = 0;
@@ -86,7 +89,7 @@ public class Characters : MonoBehaviour {
     #endregion
 
     #region Moves Vars
-    public Vector3 moveDirection;
+    public Vector3 _moveDirection;
         private bool jumping;
         [HideInInspector]
         public bool deactivateNormalGravity = false;
@@ -182,6 +185,7 @@ public class Characters : MonoBehaviour {
 
             if (Physics.Raycast(rayOrigin, Vector3.up * directionY, out hit, rayLength,  collisionMask))
             {
+                //Debug.DrawLine(transform.position, hit.point, Color.green);
                 moveDirection.y = (hit.distance - skinWidth) * directionY;
                 rayLength = hit.distance;
 
@@ -280,6 +284,36 @@ public class Characters : MonoBehaviour {
         }
     }
 
+    void DescendSlope (ref Vector3 moveDirection)
+    {
+        float directionX = Mathf.Sign(moveDirection.x);
+        Vector3 rayOrigin = (directionX == -1) ? raycastOrigins.bottomRight : raycastOrigins.bottomLeft;
+        RaycastHit hit;
+
+        if (Physics.Raycast (rayOrigin, - Vector3.up, out hit, Mathf.Infinity, collisionMask))
+        {
+            float descendSlopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+            if(descendSlopeAngle != 0f && descendSlopeAngle <= maxDescendAngle)
+            {
+                if (Mathf.Sign(hit.normal.x) == directionX)
+                {
+                    if (hit.distance - skinWidth <= Mathf.Tan(descendSlopeAngle * Mathf.Deg2Rad) * Mathf.Abs(moveDirection.x))
+                    {
+                        float moveDistance = Mathf.Abs(moveDirection.x);
+                        float descendDirectionY = Mathf.Sin(descendSlopeAngle * Mathf.Deg2Rad) * moveDistance;
+                        moveDirection.x = Mathf.Cos(descendSlopeAngle * Mathf.Deg2Rad) * moveDistance * Mathf.Sign(moveDirection.x);
+                        moveDirection.y -= descendDirectionY;
+
+                        collisions.slopeAngle = descendSlopeAngle;
+                        Debug.DrawRay(transform.position, moveDirection, Color.red);
+                        collisions.descendingSlope = true;
+                        collisions.below = true;
+                    }
+                }
+            }
+        }
+    }
+
     //Main Move Method
     public void Move(Vector3 a_moveDirection, bool jump, bool dash)
     {
@@ -288,10 +322,18 @@ public class Characters : MonoBehaviour {
 
         collisions.Reset();
 
-        HorizontalCollisions(ref a_moveDirection);
+        if(a_moveDirection.y < 0)
+        {
+            DescendSlope(ref a_moveDirection);
+        }
 
-        if (moveDirection.y != 0)
+        if(a_moveDirection.x != 0)
+            HorizontalCollisions(ref a_moveDirection);
+
+        if (a_moveDirection.y != 0)
             VerticalCollisions(ref a_moveDirection);
+
+        Debug.DrawRay(transform.position, -a_moveDirection, Color.green);
 
         transform.Translate(a_moveDirection);
         #endregion
@@ -453,7 +495,7 @@ public class Characters : MonoBehaviour {
 #region Other Moves
     void Brakes()
     {
-        velocityHistory.Add(moveDirection.x);
+        velocityHistory.Add(_moveDirection.x);
         if(Time.time > .1f)
         {
             //Debug.Log("Velocity from .1 secondes = " + velocityHistory[0]);
@@ -462,8 +504,8 @@ public class Characters : MonoBehaviour {
 
         if (!braking)
         {
-                if ((velocityHistory[0] > 0 && moveDirection.x < 0)
-                    || (velocityHistory[0] < 0 && moveDirection.x > 0))
+                if ((velocityHistory[0] > 0 && _moveDirection.x < 0)
+                    || (velocityHistory[0] < 0 && _moveDirection.x > 0))
                 {
                     if(CheckIfGrounded())
                         braking = true;
@@ -493,7 +535,7 @@ public class Characters : MonoBehaviour {
             }
             else
             {
-                moveDirection.x = 0;
+                _moveDirection.x = 0;
                 waitBeforeMove += Time.deltaTime;
             }
         }
@@ -508,7 +550,7 @@ public class Characters : MonoBehaviour {
 
     public void ApplyGravity (float gravityOverride)
     {
-        moveDirection.y -= gravityOverride * Time.deltaTime;
+        _moveDirection.y -= gravityOverride * Time.deltaTime;
     }
 
     void AirControl (float MomentumInfluenceBaseRate)
@@ -519,14 +561,14 @@ public class Characters : MonoBehaviour {
         if (MomentumInfluenceBaseRate != 0) //This check is to prevent the character to just stop the momentum in middle-air
             MomentumOnJump = Mathf.Lerp(previousTickHorizontalVelocity, MomentumInfluenceBaseRate * speed, jumpMomentumInfluenceRate);
 
-        moveDirection.x = MomentumOnJump;
-        moveDirection.x = Mathf.Clamp(moveDirection.x, -speed, speed);
+        _moveDirection.x = MomentumOnJump;
+        _moveDirection.x = Mathf.Clamp(_moveDirection.x, -speed, speed);
     }
 
     public void CancelJump ()
     {
         jumping = false;
-        moveDirection.y = 0f;
+        _moveDirection.y = 0f;
     }
 #endregion
 
@@ -593,7 +635,7 @@ public class Characters : MonoBehaviour {
         if (OnSlope)
             return true;
 
-        if (moveDirection.y >= 0 && jumping)
+        if (_moveDirection.y >= 0 && jumping)
             return false;
 
         //Debug.Log (transform.position + " leftmostGround & RightMostGround = " + collisionTests._leftMostGroundContact)

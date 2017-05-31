@@ -140,21 +140,21 @@ public class Player : Characters {
 
         if (Input.GetButtonDown ("Jump") && collisions.below)
         {
-            moveDirection.y = calculatedJumpForce;
+            _moveDirection.y = calculatedJumpForce;
         }
 
         float targetVelocityX = input.x * speed;
-        moveDirection.x = Mathf.SmoothDamp(moveDirection.x, targetVelocityX, ref velocityXSmoothing, collisions.below ? accelerationTimeGrounded : accelerationTimeAir);
-        moveDirection.y += calculatedGravity * Time.deltaTime;
+        _moveDirection.x = Mathf.SmoothDamp(_moveDirection.x, targetVelocityX, ref velocityXSmoothing, collisions.below ? accelerationTimeGrounded : accelerationTimeAir);
+        _moveDirection.y += calculatedGravity * Time.deltaTime;
         //ApplyGravity();
 
 
 
-        Move(moveDirection * Time.deltaTime);
+        Move(_moveDirection * Time.deltaTime);
 
         if (collisions.above || collisions.below)
         {
-            moveDirection.y = 0;
+            _moveDirection.y = 0;
         }
         #endregion
 
@@ -265,7 +265,7 @@ public class Player : Characters {
                 }
 
                 swallJmupTimer = 0f;
-                moveDirection.y = jumpStrength;
+                _moveDirection.y = jumpStrength;
                 swallJmuping = true;
                 jump = false;
             }
@@ -456,7 +456,7 @@ public class Player : Characters {
             }
 
             swallJmupTimer = 0f;
-            moveDirection.y = jumpStrength;
+            _moveDirection.y = jumpStrength;
             swallJmuping = true;
             jump = false;
 
