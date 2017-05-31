@@ -194,6 +194,24 @@ public class Characters : MonoBehaviour {
                 collisions.above = directionY == 1;
             }
         }
+
+        if(collisions.climbingSlope)
+        {
+            float directionX = Mathf.Sign(moveDirection.x);
+            rayLength = Mathf.Abs(moveDirection.x) + skinWidth;
+            Vector3 rayOrigin = ((directionX == -1) ? raycastOrigins.bottomLeft : raycastOrigins.bottomRight) + Vector3.up * moveDirection.y;
+            RaycastHit hit;
+
+            if (Physics.Raycast(rayOrigin, Vector3.right * directionX, out hit, rayLength, collisionMask))
+            {
+                float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+                if (slopeAngle != collisions.slopeAngle)
+                {
+                    moveDirection.x = (hit.distance - skinWidth) * directionX;
+                    collisions.slopeAngle = slopeAngle;
+                }
+            }
+        }
     }
 
     void HorizontalCollisions(ref Vector3 moveDirection)
@@ -211,6 +229,7 @@ public class Characters : MonoBehaviour {
             Vector3 rayOrigin = (directionX == -1) ? raycastOrigins.bottomLeft : raycastOrigins.bottomRight;
             rayOrigin += Vector3.up * (horizontalRaySpacing * i);
             RaycastHit hit;
+
             Debug.DrawRay(rayOrigin, Vector3.right * directionX * rayLength, Color.red);
 
             if (Physics.Raycast(rayOrigin, Vector3.right * directionX, out hit, rayLength, collisionMask))
@@ -266,10 +285,10 @@ public class Characters : MonoBehaviour {
     {
         #region Experimental
         UpdateRaycastOrigins();
+
         collisions.Reset();
 
-        if (moveDirection.x != 0)
-            HorizontalCollisions(ref a_moveDirection);
+        HorizontalCollisions(ref a_moveDirection);
 
         if (moveDirection.y != 0)
             VerticalCollisions(ref a_moveDirection);
