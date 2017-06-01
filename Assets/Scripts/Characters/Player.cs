@@ -143,12 +143,20 @@ public class Player : Characters {
         if (!swallJmuping)
             input = new Vector3(Input.GetAxisRaw("Horizontal"), Input.GetAxisRaw("Vertical"));
 
-        if (input.y < 0 && collisions.below)
+        if (input.y < 0 && collisions.below && _moveDirection.y == 0)
             Crouch();
         else
             Stand();
 
-        if (jump && collisions.below)
+
+        Debug.Log("Through below = " + collisions.getThroughBelow + " crouch = " + crouching + " jump = " + jump);
+        if (collisions.getThroughBelow && crouching && jump)
+        {
+            Debug.Log("Yeah" + justDroppedPlatform.name);
+            CancelJump();
+            justDroppedPlatform.gameObject.layer = 0;
+        }
+        else if (jump && collisions.below)
         {
             _moveDirection.y = calculatedJumpForce;
         }
@@ -168,10 +176,10 @@ public class Player : Characters {
         else
             ContinueSwallJmup();
 
-        if (_moveDirection.y < 0 && MaxWallSlideSpeed != 0)
+        if (_moveDirection.y < 0 && MaxWallSlideSpeed != 0) //Drag against a wall
         {
             _moveDirection.y = -MaxWallSlideSpeed;
-            Debug.Log("DRAG");
+            //Debug.Log("DRAG");
         }
 
         if (Input.GetButtonDown("Dash") && !dashing && !alreadyDashedInAir)
@@ -205,6 +213,7 @@ public class Player : Characters {
         }
         else
             ContinueDash();
+
         #endregion
 
         /*
@@ -511,7 +520,7 @@ public class Player : Characters {
 
     public void StopAndResetDashNGrab (bool calledByEnemy)
     {
-        Debug.Log("Finished dash with timer = " + dashTimer + " called by enemy = " + calledByEnemy);
+        //Debug.Log("Finished dash with timer = " + dashTimer + " called by enemy = " + calledByEnemy);
         dashing = false;
         dashCoolDownTimer = 0f;
         dashTimer = 0f;

@@ -65,6 +65,7 @@ public class Characters : MonoBehaviour {
     {
         public bool above, below;
         public bool left, right;
+        public bool getThroughAbove, getThroughBelow;
 
         public bool climbingSlope;
         public bool descendingSlope;
@@ -75,6 +76,8 @@ public class Characters : MonoBehaviour {
         {
             above = below = false;
             left = right = false;
+            getThroughAbove = getThroughBelow = false;
+
             climbingSlope = false;
             descendingSlope = false;
 
@@ -179,7 +182,7 @@ public class Characters : MonoBehaviour {
             RaycastHit hit;
             Debug.DrawRay(rayOrigin, Vector3.up * directionY * rayLength, Color.red);
 
-            if (Physics.Raycast(rayOrigin, Vector3.up * directionY, out hit, rayLength,  collisionMask))
+            if (Physics.Raycast(rayOrigin, Vector3.up * directionY, out hit, rayLength, collisionMask))
             {
                 //Debug.DrawLine(transform.position, hit.point, Color.green);
                 moveDirection.y = (hit.distance - skinWidth) * directionY;
@@ -192,6 +195,18 @@ public class Characters : MonoBehaviour {
 
                 collisions.below = directionY == -1;
                 collisions.above = directionY == 1;
+
+                if (hit.collider.transform.CompareTag("GoThroughPlatform"))
+                {
+                    collisions.getThroughBelow = collisions.below;
+                    collisions.getThroughAbove = collisions.above;
+                    justDroppedPlatform = hit.collider;
+                }
+                else
+                {
+                    collisions.getThroughBelow = false;
+                    collisions.getThroughAbove = false;
+                }
             }
         }
 
@@ -342,6 +357,25 @@ public class Characters : MonoBehaviour {
         else if (a_moveDirection.x > 0)
             thisSprite.flipX = false;
 
+        if(justDroppedPlatform != null && collisions.getThroughAbove)
+        {
+            climbingDropDownPlatform = true;
+        }
+
+        if (climbingDropDownPlatform)
+        {
+            //TODO: Add a custom variable for speed
+            a_moveDirection.y = speed * Time.deltaTime;
+        }
+
+        if (justDroppedPlatform != null && CheckIfGotPastDropDownPlatform())
+        {
+            justDroppedPlatform.gameObject.layer = LayerMask.NameToLayer("Ground");
+            a_moveDirection.y = 0;
+            climbingDropDownPlatform = false;
+            justDroppedPlatform = null;
+        }
+
         transform.Translate(a_moveDirection);
         #endregion
 
@@ -470,9 +504,9 @@ public class Characters : MonoBehaviour {
 
     public bool CheckIfGotPastDropDownPlatform()
     {
-        if (thisCollider.bounds.max.y < justDroppedPlatform.bounds.min.y - .1f)
+        if (thisCollider.bounds.max.y <= justDroppedPlatform.bounds.min.y - .1f)
             return true;
-        else if (thisCollider.bounds.min.y > justDroppedPlatform.bounds.max.y + .1f)
+        else if (thisCollider.bounds.min.y >= justDroppedPlatform.bounds.max.y + .1f)
             return true;
         else
             return false;
