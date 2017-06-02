@@ -10,7 +10,7 @@ public class Characters : MonoBehaviour {
 
     #region Inspector Variables
     public float speed = 10;
-    float skinWidth = .015f;
+    public float skinWidth = .015f;
     #endregion
 
     #region Experimental
@@ -72,6 +72,9 @@ public class Characters : MonoBehaviour {
         public float slopeAngle, slopeAnglePreviousTick;
         public Vector3 moveDirPreviousTick;
 
+        public float highestContact;
+        public int highestContactNumber;
+
         public void Reset()
         {
             above = below = false;
@@ -82,6 +85,8 @@ public class Characters : MonoBehaviour {
             descendingSlope = false;
 
             slopeAnglePreviousTick = slopeAngle;
+            highestContact = 0;
+            highestContactNumber = 0;
             slopeAngle = 0;
         }
     }
@@ -250,6 +255,9 @@ public class Characters : MonoBehaviour {
             if (Physics.Raycast(rayOrigin, Vector3.right * directionX, out hit, rayLength, collisionMask))
             {
                 float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+
+                if (hit.point.y > collisions.highestContact)
+                    collisions.highestContact = hit.point.y;
 
                 if (i == 0 && slopeAngle <= maxClimbAngle)
                 {

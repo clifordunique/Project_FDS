@@ -149,10 +149,10 @@ public class Player : Characters {
             Stand();
 
 
-        Debug.Log("Through below = " + collisions.getThroughBelow + " crouch = " + crouching + " jump = " + jump);
+        //Debug.Log("Through below = " + collisions.getThroughBelow + " crouch = " + crouching + " jump = " + jump);
         if (collisions.getThroughBelow && crouching && jump)
         {
-            Debug.Log("Yeah" + justDroppedPlatform.name);
+            //Debug.Log("Yeah" + justDroppedPlatform.name);
             CancelJump();
             justDroppedPlatform.gameObject.layer = 0;
         }
@@ -196,6 +196,11 @@ public class Player : Characters {
                 StartRegularDash();
             }
         }
+
+        if (!ClimbingLedge)
+            LedgeGrabCheck();
+        else
+            LedgeGrab();
 
         Move(_moveDirection * Time.deltaTime);
 
@@ -300,7 +305,7 @@ public class Player : Characters {
     {
         if ((collisions.left || collisions.right) && !collisions.below)
         {
-            MaxWallSlideSpeed = 1.8f;
+            MaxWallSlideSpeed = 4.5f;
 
             if (jump && !justJumped)
             {
@@ -460,38 +465,84 @@ public class Player : Characters {
         }
     }
 
+    float LedgeYPos = 0;
+    bool ledgeLeft = false;
+
+    //TODO HERE OKAY
     void LedgeGrabCheck ()
     {
-        if (!collisions.below &&
-        ((collisionTests.MaxRightSideCount >= 4 && !thisSprite.flipX) ||
-        (collisionTests.MaxLeftSideCount >= 4 && thisSprite.flipX)))
+
+        if(!collisions.below)
         {
-            Vector3 localLedgePosition = transform.InverseTransformPoint(new Vector3(transform.position.x, collisionTests._highestContact, transform.position.z));
+            if (collisions.right)
+            {
+                RaycastHit hit;
+                Vector3 origin = raycastOrigins.topRight + transform.right * skinWidth;
+
+                Debug.DrawRay(origin, -Vector3.up * thisCollider.bounds.size.y * .15f, Color.red);
+
+                if (Physics.Raycast(origin, -Vector3.up, out hit, thisCollider.bounds.size.y * .15f, collisionMask))
+                {
+                    ledgeLeft = false;
+                    LedgeYPos = hit.point.y;
+                    Debug.Log("Can grab ledge !");
+                    CancelJump();
+                    LedgeGrab();
+                }
+            }
+            else if (collisions.left)
+                {
+                    RaycastHit hit;
+                    Vector3 origin = raycastOrigins.topLeft - transform.right * skinWidth;
+
+                    Debug.DrawRay(origin, -Vector3.up * thisCollider.bounds.size.y * .15f, Color.red);
+
+                    if (Physics.Raycast(origin, -Vector3.up, out hit, thisCollider.bounds.size.y * .15f, collisionMask))
+                    {
+                        ledgeLeft = true;
+                        LedgeYPos = hit.point.y;
+                        Debug.Log("Can grab ledge !");
+                        CancelJump();
+                        LedgeGrab();
+                    }
+                }
+        }
+
+        /*if (!collisions.below &&
+        ((collisions.right /*&& /*!thisSprite.flipX*//*) ||
+        ((collisions.left /*&& /*thisSprite.flipX*//*))))
+        {
+            Vector3 localLedgePosition = transform.InverseTransformPoint(new Vector3(transform.position.x, collisions.highestContact, transform.position.z));
             float ledgeGrabHeight = thisCollider.bounds.size.y * PaulineHeightPercentToGrabLedge;
 
-            //Debug.Log("Touching something on the right side, highest local = " + transform.InverseTransformPoint(new Vector3(thisCollider.bounds.min.x, collisionTests._highestContact, thisCollider.bounds.min.z)));
-            //Debug.DrawLine(thisCollider.bounds.min, new Vector3(transform.position.x, collisionTests._highestContact, transform.position.z), Color.red);
+            Debug.Log("Touching something on the right side, highest local = " + transform.InverseTransformPoint(new Vector3(thisCollider.bounds.min.x, collisions.highestContact, thisCollider.bounds.min.z)));
+            Debug.DrawLine(thisCollider.bounds.min, new Vector3(transform.position.x, collisions.highestContact, transform.position.z), Color.red);
 
-            if (Mathf.Abs(thisCollider.bounds.min.y + ledgeGrabHeight - collisionTests._highestContact) < .1f)
+            if (collisions.highestContact < raycastOrigins.topLeft.y && collisions.highestContact > raycastOrigins.bottomLeft.y + thisCollider.bounds.size.y * .8f)
             {
-                //Debug.Log("READY TO LEDGE GRAB");
+                Debug.Log("READY TO LEDGE GRAB");
                 CancelJump();
                 LedgeGrab();
             }
-        }
+        } */
     }
 
     void LedgeGrab ()
     {
-        if (collisionTests.MaxRightSideCount >= 4 || collisionTests.MaxLeftSideCount >= 4)
+        if (raycastOrigins.bottomLeft.y <= LedgeYPos)
         {
             ClimbingLedge = true;
-            thisRigidbody.velocity = transform.up * ledgeGrabSpeed;
-            //Debug.Log("Climbing Edge");
+            _moveDirection = transform.up * speed;
+            Debug.Log("Climbing Edge");
         }
         else
         {
-            //Debug.Log("End Ledge Climb");
+            if(ledgeLeft)
+                _moveDirection = -transform.right * speed * .5f;
+            else
+                _moveDirection = transform.right * speed * .5f;
+
+            Debug.Log("End Ledge Climb");
             ClimbingLedge = false;
         }
 
