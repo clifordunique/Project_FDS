@@ -94,7 +94,7 @@ public class Characters : MonoBehaviour {
 
     #region Moves Vars
     public Vector3 _moveDirection;
-        private bool jumping;
+        public bool jumping;
         [HideInInspector]
         public bool deactivateNormalGravity = false;
         bool climbingDropDownPlatform = false;
@@ -175,6 +175,22 @@ public class Characters : MonoBehaviour {
 
     bool previousFrameOnSlope = false;
 
+    void NormalVerticalCollision(ref Vector3 moveDirection, ref float directionY, ref float rayLength, ref RaycastHit hit)
+    {
+        Debug.Log("Normal Collision");
+        //Debug.DrawLine(transform.position, hit.point, Color.green);
+        moveDirection.y = (hit.distance - skinWidth) * directionY;
+        rayLength = hit.distance;
+
+        if (collisions.climbingSlope)
+        {
+            moveDirection.x = moveDirection.y / Mathf.Tan(collisions.slopeAngle * Mathf.Deg2Rad) * Mathf.Sign(moveDirection.x);
+        }
+
+        collisions.below = directionY == -1;
+        collisions.above = directionY == 1;
+    }
+
     void VerticalCollisions(ref Vector3 moveDirection)
     {
         float directionY = Mathf.Sign(moveDirection.y);
@@ -189,31 +205,27 @@ public class Characters : MonoBehaviour {
 
             if (Physics.Raycast(rayOrigin, Vector3.up * directionY, out hit, rayLength, collisionMask))
             {
-                //Debug.DrawLine(transform.position, hit.point, Color.green);
-                moveDirection.y = (hit.distance - skinWidth) * directionY;
-                rayLength = hit.distance;
+                    if (hit.collider.transform.CompareTag("GoThroughPlatform"))
+                    {
+                        collisions.getThroughBelow = directionY == -1;
+                        collisions.getThroughAbove = directionY == 1;
+                        justDroppedPlatform = hit.collider;
 
-                if (collisions.climbingSlope)
-                {
-                    moveDirection.x = moveDirection.y / Mathf.Tan(collisions.slopeAngle * Mathf.Deg2Rad) * Mathf.Sign(moveDirection.x);
-                }
+                        if (collisions.getThroughAbove)
+                            Debug.Log("Climbing get trhough platform");
+                        else
+                        if (collisions.getThroughBelow)
+                            NormalVerticalCollision(ref moveDirection, ref directionY, ref rayLength, ref hit);
+                    }
+                    else
+                    {
+                        /*collisions.getThroughBelow = false;
+                        collisions.getThroughAbove = false;*/
 
-                collisions.below = directionY == -1;
-                collisions.above = directionY == 1;
-
-                if (hit.collider.transform.CompareTag("GoThroughPlatform"))
-                {
-                    collisions.getThroughBelow = collisions.below;
-                    collisions.getThroughAbove = collisions.above;
-                    justDroppedPlatform = hit.collider;
-                }
-                else
-                {
-                    collisions.getThroughBelow = false;
-                    collisions.getThroughAbove = false;
+                        NormalVerticalCollision(ref moveDirection, ref directionY, ref rayLength, ref hit);
+                    }
                 }
             }
-        }
 
         if(collisions.climbingSlope)
         {
@@ -252,8 +264,9 @@ public class Characters : MonoBehaviour {
 
             Debug.DrawRay(rayOrigin, Vector3.right * directionX * rayLength, Color.red);
 
-            if (Physics.Raycast(rayOrigin, Vector3.right * directionX, out hit, rayLength, collisionMask))
+            if (Physics.Raycast(rayOrigin, Vector3.right * directionX, out hit, rayLength, collisionMask) && !hit.transform.CompareTag("GoThroughPlatform"))
             {
+                Debug.Log("Horizontal collision");
                 float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
 
                 if (hit.point.y > collisions.highestContact)
@@ -365,8 +378,9 @@ public class Characters : MonoBehaviour {
         else if (a_moveDirection.x > 0)
             thisSprite.flipX = false;
 
-        if(justDroppedPlatform != null && collisions.getThroughAbove)
+        if(justDroppedPlatform != null && jumping)
         {
+            Debug.Log("Climbing for real lol");
             climbingDropDownPlatform = true;
         }
 
@@ -376,12 +390,18 @@ public class Characters : MonoBehaviour {
             a_moveDirection.y = speed * Time.deltaTime;
         }
 
-        if (justDroppedPlatform != null && CheckIfGotPastDropDownPlatform())
+        if (justDroppedPlatform != null && CheckIfGotPastDropDownPlatform(ref a_moveDirection))
         {
+            Debug.Log("Got through drop down");
             justDroppedPlatform.gameObject.layer = LayerMask.NameToLayer("Ground");
             a_moveDirection.y = 0;
             climbingDropDownPlatform = false;
             justDroppedPlatform = null;
+        }
+
+        if (a_moveDirection.y <= 0 && jumping)
+        {
+            jumping = false;
         }
 
         transform.Translate(a_moveDirection);
@@ -510,11 +530,11 @@ public class Characters : MonoBehaviour {
         #endregion
     }
 
-    public bool CheckIfGotPastDropDownPlatform()
+    public bool CheckIfGotPastDropDownPlatform(ref Vector3 moveDirection)
     {
-        if (thisCollider.bounds.max.y <= justDroppedPlatform.bounds.min.y - .1f)
+        if (thisCollider.bounds.max.y <= justDroppedPlatform.bounds.min.y - .1f && moveDirection.y < 0)
             return true;
-        else if (thisCollider.bounds.min.y >= justDroppedPlatform.bounds.max.y + .1f)
+        else if (thisCollider.bounds.min.y >= justDroppedPlatform.bounds.max.y + .1f && moveDirection.y > 0)
             return true;
         else
             return false;

@@ -152,14 +152,19 @@ public class Player : Characters {
         //Debug.Log("Through below = " + collisions.getThroughBelow + " crouch = " + crouching + " jump = " + jump);
         if (collisions.getThroughBelow && crouching && jump)
         {
-            //Debug.Log("Yeah" + justDroppedPlatform.name);
+            Debug.Log("Yeah" + justDroppedPlatform.name);
             CancelJump();
             justDroppedPlatform.gameObject.layer = 0;
         }
         else if (jump && collisions.below)
         {
             _moveDirection.y = calculatedJumpForce;
+            jumping = true;
         }
+
+
+
+        //if (justJumped)
 
         float targetVelocityX = input.x * speed;
 
