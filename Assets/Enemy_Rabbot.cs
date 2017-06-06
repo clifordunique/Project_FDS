@@ -164,7 +164,7 @@ public class Enemy_Rabbot : Characters {
 
         //Debug.Log("Patrol direction = " + moveDirection);
 
-        Move(moveDirection.x, jump);
+        Move(moveDirection);
     }
 
     void Chase ()
@@ -178,10 +178,10 @@ public class Enemy_Rabbot : Characters {
         //Debug.Log("X distance from player to enemy = " + Mathf.Abs(player.transform.position.x - transform.position.x));
 
         if (Mathf.Abs(player.transform.position.x - transform.position.x) > 3f)
-            Move(moveDirection.x, jump);
+            Move(moveDirection);
         else
         {
-            Move(0);
+            Move(Vector3.zero);
             //Debug.Log("Close to player");
         }
     }
@@ -194,7 +194,7 @@ public class Enemy_Rabbot : Characters {
 
         //Debug.Log("Patrol direction = " + moveDirection);
 
-        Move(moveDirection.x, jump);
+        Move(moveDirection);
     }
 
 }

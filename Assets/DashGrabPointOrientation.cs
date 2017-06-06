@@ -51,11 +51,13 @@ public class DashGrabPointOrientation : MonoBehaviour {
 
     private void OnTriggerEnter(Collider other)
     {
-        //Debug.Log("Trigger hit" + other.transform.name);
+        Debug.Log("Trigger hit" + other.transform.name);
         if (other.CompareTag("Player") && coolDownTimer >= grabCoolDown)
         {
+            Debug.Log("Yes it's player yes hello");
             if (playerClass.dashing && playerClass.dashAttachment == null && !playerClass.canDashFromAttachment)
             {
+                Debug.Log("BLBLBLBLB");
                 playerClass.dashAttachment = gameObject;
                 playerClass.canDashFromAttachment = true;
                 playerClass.attachmentColliders = gameObject.GetComponentsInChildren<Collider>().ToList();

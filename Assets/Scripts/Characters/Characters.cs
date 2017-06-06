@@ -352,7 +352,7 @@ public class Characters : MonoBehaviour {
     }
 
     //Main Move Method
-    public void Move(Vector3 a_moveDirection, bool jump, bool dash)
+    public void Move(Vector3 a_moveDirection)
     {
         #region Experimental
         UpdateRaycastOrigins();
@@ -538,27 +538,6 @@ public class Characters : MonoBehaviour {
             return true;
         else
             return false;
-    }
-
-    //Move overrides
-    public void Move (float HorizontalDirection)
-    {
-        Move(HorizontalDirection, 0, false);
-    } 
-
-    public void Move(float HorizontalDirection, bool jump)
-    {
-        Move(HorizontalDirection, 0, jump);
-    }
-
-    public void Move(Vector3 a_moveDirection)
-    {
-        Move(a_moveDirection, false, false);
-    } 
-
-    public void Move (float HorizontalDirection, float VerticalDirection, bool jump)
-    {
-        Move (new Vector3 (HorizontalDirection, VerticalDirection, 0f), jump, false);
     }
 
 #region Other Moves

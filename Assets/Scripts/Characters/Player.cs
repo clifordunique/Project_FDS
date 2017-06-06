@@ -156,7 +156,7 @@ public class Player : Characters {
             CancelJump();
             justDroppedPlatform.gameObject.layer = 0;
         }
-        else if (jump && collisions.below)
+        else if (jump && collisions.below && attachmentColliders.Count == 0)
         {
             _moveDirection.y = calculatedJumpForce;
             jumping = true;
@@ -224,39 +224,22 @@ public class Player : Characters {
         else
             ContinueDash();
 
-        #endregion
-
-        /*
-        //Input.GetButtonDown("Jump") = Input.GetButtonDown("Input.GetButtonDown("Jump")");
-        UpdateAnimator();
-        jump = Input.GetButtonDown("Jump");
-
-        if (dashing && !CheckIfGrounded())
-        {
-            alreadyDashedInAir = true;
-        }
-
-        if (CheckIfGrounded())
-        {
-            alreadyDashedInAir = false;
-        }
-
-
-
         //If attached to an enemy after a dash
         if (dashAttachment != null)
         {
             thisSprite.flipX = dashAttachment.GetComponentInParent<SpriteRenderer>().flipX;
-        }*/
-    }
+        }
 
-    /*private void LateUpdate()
-    {
-        //Debug.Log("Dash Attachment = " + dashAttachment);
-        if (dashing)
-            ContinueDash();
+        if (dashing && !collisions.below)
+        {
+            alreadyDashedInAir = true;
+        }
 
-        //Special moves when attached to an enemy
+        if (collisions.below)
+        {
+            alreadyDashedInAir = false;
+        }
+
         if (dashAttachment != null)
         {
             transform.position = dashAttachment.transform.position;
@@ -264,9 +247,9 @@ public class Player : Characters {
             //Jumping from attachement
             if (jump)
             {
-                moveDirection.y = jumpStrength;
-                MomentumOnJump = 0;
-                Move(0);
+                _moveDirection.y = calculatedJumpForce;
+                jumping = true;
+                //Move(Vector3.zero);
                 PostGrabDetach();
             }
             else if (Input.GetAxisRaw("Vertical") < -.5f)
@@ -275,23 +258,43 @@ public class Player : Characters {
             }
         }
 
-        if (Input.GetButtonDown("Dash") && !dashing && !alreadyDashedInAir)
-        {
-            //Debug.Log("Dash Button Pressed...");
-            if (canDashFromAttachment)
-            {
-                PostGrabDetach();
-                StartDashFromAttachment();
-            }
-            else if (!swallJmuping)
-            {
-                //Debug.Log("... from nothing");
-                StartRegularDash();
-            }
-        }
-    }*/
+        #endregion
 
-    void PostGrabDetach ()
+        /*
+        //Input.GetButtonDown("Jump") = Input.GetButtonDown("Input.GetButtonDown("Jump")");
+        UpdateAnimator();
+        jump = Input.GetButtonDown("Jump");
+
+
+        */
+    }
+
+/*private void LateUpdate()
+{
+   //Debug.Log("Dash Attachment = " + dashAttachment);
+   if (dashing)
+       ContinueDash();
+
+   //Special moves when attached to an enemy
+ 
+
+   if (Input.GetButtonDown("Dash") && !dashing && !alreadyDashedInAir)
+   {
+       //Debug.Log("Dash Button Pressed...");
+       if (canDashFromAttachment)
+       {
+           PostGrabDetach();
+           StartDashFromAttachment();
+       }
+       else if (!swallJmuping)
+       {
+           //Debug.Log("... from nothing");
+           StartRegularDash();
+       }
+   }
+}*/
+
+   void PostGrabDetach ()
     {
         //Debug.Log("... from " + dashAttachment.name + ".");
         canDashFromAttachment = false;

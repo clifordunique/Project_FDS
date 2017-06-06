@@ -41,6 +41,8 @@ public class Enemy : Characters {
         ExclamationPoint = transform.Find("ExclamationPoint");
         QuestionMark = transform.Find("QuestionMark");
         currentHealthPoints = maxHealthPoints;
+        Physics.IgnoreCollision(thisCollider, transform.FindChild("DashGrabPoint").GetComponent<Collider>());
+        Physics.IgnoreCollision(thisCollider, transform.FindChild("HitBox").GetComponent<Collider>());
     }
 	
 	// Update is called once per frame
@@ -55,18 +57,18 @@ public class Enemy : Characters {
             switch (currentBehaviour)
             {
                 case BehaviourStates.Patrol:
-                    //Patrol();
+                    Patrol();
                     ExclamationPoint.gameObject.SetActive(false);
                     QuestionMark.gameObject.SetActive(false);
                     break;
                 case BehaviourStates.Chase:
-                    //Chase();
+                    Chase();
                     ExclamationPoint.gameObject.SetActive(true);
                     QuestionMark.gameObject.SetActive(false);
                     //Debug.Log(transform.name + " chasing");
                     break;
                 case BehaviourStates.LostTrack:
-                    //GoToLastKnownPosition();
+                    GoToLastKnownPosition();
                     searchForPlayerTimer += Time.deltaTime;
 
                     ExclamationPoint.gameObject.SetActive(false);
@@ -150,6 +152,7 @@ public class Enemy : Characters {
 
     private void OnTriggerEnter(Collider other)
     {
+        Debug.Log("Enemy collider triggered = " + other.transform.name + " current waypoint = " + currentWayPoint.transform.name);
         if (other.transform == currentWayPoint)
         {
             GetNextWayPoint();
@@ -164,7 +167,7 @@ public class Enemy : Characters {
 
         //Debug.Log("Patrol direction = " + moveDirection);
 
-        Move(moveDirection.x, jump);
+        Move(moveDirection * Time.deltaTime);
     }
 
     void Chase ()
@@ -178,10 +181,10 @@ public class Enemy : Characters {
         //Debug.Log("X distance from player to enemy = " + Mathf.Abs(player.transform.position.x - transform.position.x));
 
         if (Mathf.Abs(player.transform.position.x - transform.position.x) > 3f)
-            Move(moveDirection.x, jump);
+            Move(moveDirection * Time.deltaTime);
         else
         {
-            Move(0);
+            Move(Vector3.zero);
             //Debug.Log("Close to player");
         }
     }
@@ -194,7 +197,7 @@ public class Enemy : Characters {
 
         //Debug.Log("Patrol direction = " + moveDirection);
 
-        Move(moveDirection.x, jump);
+        Move(moveDirection * Time.deltaTime);
     }
 
 }
