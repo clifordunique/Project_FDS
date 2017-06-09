@@ -17,8 +17,6 @@ public class DashGrabPointOrientation : MonoBehaviour {
     Player playerClass;
     DashGrabPointOrientation grabbedScript;
 
-    bool readyToGrab = true;
-
 	// Use this for initialization
 	void Start ()
     {
