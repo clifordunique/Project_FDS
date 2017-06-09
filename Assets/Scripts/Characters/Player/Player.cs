@@ -6,6 +6,8 @@ public class Player : Characters {
 
     #region Inspector Customization
     //Dash Parameters
+    [Header ("---PLAYER SPECIFIC---")]
+    [Header ("Dash Options")]
     [SerializeField]
     float dashDuration = 1f;     //TODO : Maybe replace this by travel distance?
     [SerializeField]
@@ -14,12 +16,14 @@ public class Player : Characters {
     float dashCoolDown = .5f;
 
     //Basic moves Params
+    [Header ("Moves acceleration")]
     [SerializeField]
     float accelerationTimeAir = .2f;
     [SerializeField]
     float accelerationTimeGrounded = .1f;
 
     //Swall Jmup
+    [Header ("Swall Jmup Options")]
     [SerializeField]
     float swallJmupDuration = .2f;
     public float WallSlideSpeed = 4.5f;
@@ -66,6 +70,7 @@ public class Player : Characters {
     #endregion
 
     #region Processing Vars
+    [HideInInspector]
     public Vector3 _moveDirection;
     float velocityXSmoothing;
     Vector3 input;

@@ -7,12 +7,14 @@ using UnityEngine;
 public class Characters : MonoBehaviour {
 
     #region Basic Moves Inspector Variables
+    [Header ("Basic moves options")]
     public float speed = 10;
     public float jumpHeight = 4;
     public float timeToJumpApex = .4f;
     #endregion
 
     #region Character Collision System
+    [Header ("Collision Detection Options")]
     public float skinWidth = .015f;
 
     [HideInInspector]
@@ -29,6 +31,7 @@ public class Characters : MonoBehaviour {
     public LayerMask collisionMask;
     public CollisionInfo collisions;
 
+    [Header ("Slope options")]
     [SerializeField]
     float maxClimbAngle = 89f;
     [SerializeField]
@@ -36,6 +39,7 @@ public class Characters : MonoBehaviour {
     #endregion
 
     #region Moves Vars
+    [HideInInspector]
     public bool jumping;
     [HideInInspector]
     public float CurrentYSpeedMaxClamp = 0f;
@@ -60,6 +64,7 @@ public class Characters : MonoBehaviour {
     #region external components
     [HideInInspector]
     public CharactersSharedVariables sharedVariables;
+    [HideInInspector]
     public Collider justDroppedPlatform = null;
     #endregion
 
@@ -244,7 +249,6 @@ public class Characters : MonoBehaviour {
 
             if (Physics.Raycast(rayOrigin, Vector3.right * directionX, out hit, rayLength, collisionMask) && !hit.transform.CompareTag("GoThroughPlatform"))
             {
-                Debug.Log("Horizontal collision");
                 float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
 
                 if (hit.point.y > collisions.highestContact)

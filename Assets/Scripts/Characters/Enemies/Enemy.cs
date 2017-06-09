@@ -7,6 +7,7 @@ public class Enemy : Characters {
 
     Vector3 moveDirection = Vector3.zero;
 
+    [Header ("---ENEMY SPECIFIC---")]
     #region Setup
     [SerializeField]
     int maxHealthPoints = 3;
@@ -15,6 +16,7 @@ public class Enemy : Characters {
     #endregion
 
     #region Player Related Vars
+    [HideInInspector]
     public bool PlayerInSight = false;
     Player player;
     #endregion
@@ -49,8 +51,13 @@ public class Enemy : Characters {
     void Start ()
     {
         //Initializing waypoints...
-        UpdateWayPointList();
-        GetNextWayPoint();
+        if (LinkedPath == null)
+            Debug.LogWarning("No Path Set for " + transform.name + " ! Deactivating Patrol behaviour...");
+        else
+        {
+            UpdateWayPointList();
+            GetNextWayPoint();
+        }
 
         //Getting external stuff
         grabbedScript = gameObject.GetComponentInChildren<DashGrabPointOrientation>();
@@ -71,6 +78,8 @@ public class Enemy : Characters {
 
         calculatedGravity = -(2 * jumpHeight) / Mathf.Pow(timeToJumpApex, 2);
         calculatedJumpForce = Mathf.Abs(calculatedGravity) * timeToJumpApex;
+
+
     }
 	
 	// Update is called once per frame
@@ -82,7 +91,11 @@ public class Enemy : Characters {
             switch (currentBehaviour)
             {
                 case BehaviourStates.Patrol:
-                    Patrol();
+                    if (LinkedPath != null)
+                        Patrol();
+                    else
+                        moveDirection.x = 0f;
+
                     ExclamationPoint.gameObject.SetActive(false);
                     QuestionMark.gameObject.SetActive(false);
                     break;
