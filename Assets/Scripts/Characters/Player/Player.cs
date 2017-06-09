@@ -180,7 +180,6 @@ public class Player : Characters {
         }
         else if (jump && collisions.below && attachmentColliders.Count == 0) //Regular Jump
         {
-            Debug.Log("JUMP BITCH");
             _moveDirection.y = calculatedJumpForce;
             jumping = true;
         }
@@ -358,7 +357,7 @@ public class Player : Characters {
     void PostDashAttached ()
     {
         thisSprite.flipX = dashAttachment.GetComponentInParent<SpriteRenderer>().flipX;
-        _moveDirection.x = 0;
+        _moveDirection = Vector3.zero;
         transform.position = dashAttachment.transform.position;
 
         //Jumping from attachement

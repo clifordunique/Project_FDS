@@ -121,8 +121,8 @@ public class Enemy : Characters {
         moveDirection.y += calculatedGravity * Time.deltaTime;
 
 
-
-        ApplyMoveAndCollisions(moveDirection * Time.deltaTime);
+        if(!player.dashAttachment == grabbedScript.gameObject)
+            ApplyMoveAndCollisions(moveDirection * Time.deltaTime);
     }
 
     void UpdateStateTriggers()
