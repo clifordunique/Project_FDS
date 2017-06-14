@@ -417,11 +417,22 @@ public class Player : Characters {
             {
                 if (!hit.transform.CompareTag("GoThroughPlatform"))
                 {
-                    Debug.Log("Start climbing ledge");
-                    ClimbingLedge = true;
-                    CurrentLedgeYPos = hit.point.y;
-                    CancelJump();
-                    LedgeGrab();
+                    //Let's check if there's not platform too close on top before attempting a ledge grab
+                    Vector3 topCheckOrigin = hit.point - Vector3.up * .01f;
+                    RaycastHit secondHit;
+
+                    if (Physics.Raycast(topCheckOrigin, Vector3.up, out secondHit, thisCollider.bounds.size.y + .11f /*.11f being a small margin*/, collisionMask))
+                    {
+                        Debug.Log("Ground on top of ledge, aborting ledge grab attempt.");
+                    }
+                    else
+                    {
+                        Debug.Log("Start climbing ledge");
+                        ClimbingLedge = true;
+                        CurrentLedgeYPos = hit.point.y;
+                        CancelJump();
+                        LedgeGrab();
+                    }
                 }
             }
         }
