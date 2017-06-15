@@ -350,9 +350,9 @@ public class Characters : MonoBehaviour {
 
     public bool CheckIfGotPastDropDownPlatform(ref Vector3 moveDirection)
     {
-        if (thisCollider.bounds.max.y <= collisions.justDroppedPlatform.bounds.min.y - .1f && moveDirection.y < 0)
+        if (thisCollider.bounds.max.y <= collisions.justDroppedPlatform.bounds.min.y - .01f && moveDirection.y < 0)
             return true;
-        else if (thisCollider.bounds.min.y >= collisions.justDroppedPlatform.bounds.max.y + .1f && moveDirection.y > 0)
+        else if (thisCollider.bounds.min.y >= collisions.justDroppedPlatform.bounds.max.y + .01f && moveDirection.y > 0)
             return true;
         else
             return false;
