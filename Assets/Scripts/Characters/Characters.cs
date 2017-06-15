@@ -64,8 +64,7 @@ public class Characters : MonoBehaviour {
     #region external components
     [HideInInspector]
     public CharactersSharedVariables sharedVariables;
-    [HideInInspector]
-    public Collider justDroppedPlatform = null;
+
     #endregion
 
     #region Collisions Structs
@@ -80,6 +79,7 @@ public class Characters : MonoBehaviour {
         public bool above, below;
         public bool left, right;
         public bool getThroughAbove, getThroughBelow;
+        public Collider justDroppedPlatform;
 
         public bool climbingSlope;
         public bool descendingSlope;
@@ -94,6 +94,7 @@ public class Characters : MonoBehaviour {
             above = below = false;
             left = right = false;
             getThroughAbove = getThroughBelow = false;
+            //justDroppedPlatform = null;
 
             climbingSlope = false;
             descendingSlope = false;
@@ -195,10 +196,12 @@ public class Characters : MonoBehaviour {
                 {
                     collisions.getThroughBelow = directionY == -1;
                     collisions.getThroughAbove = directionY == 1;
-                    justDroppedPlatform = hit.collider;
+                    collisions.justDroppedPlatform = hit.collider;
 
                     if (collisions.getThroughAbove)
-                        Debug.Log("Climbing get trhough platform");
+                    {
+                        Debug.Log("Climbing get through platform");
+                    }
                     else
                     if (collisions.getThroughBelow)
                         ApplyVerticalCollision(ref moveDirection, ref directionY, ref rayLength, ref hit);
@@ -346,9 +349,9 @@ public class Characters : MonoBehaviour {
 
     public bool CheckIfGotPastDropDownPlatform(ref Vector3 moveDirection)
     {
-        if (thisCollider.bounds.max.y <= justDroppedPlatform.bounds.min.y - .1f && moveDirection.y < 0)
+        if (thisCollider.bounds.max.y <= collisions.justDroppedPlatform.bounds.min.y - .1f && moveDirection.y < 0)
             return true;
-        else if (thisCollider.bounds.min.y >= justDroppedPlatform.bounds.max.y + .1f && moveDirection.y > 0)
+        else if (thisCollider.bounds.min.y >= collisions.justDroppedPlatform.bounds.max.y + .1f && moveDirection.y > 0)
             return true;
         else
             return false;

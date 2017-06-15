@@ -67,6 +67,7 @@ public class Player : Characters {
 
     //Misc state
     bool climbingDropDownPlatform = false;
+    bool droppingDropDownPlatform = false;
     #endregion
 
     #region Processing Vars
@@ -181,7 +182,8 @@ public class Player : Characters {
         if (collisions.getThroughBelow && crouching && jump) //Drop Down Platforms
         {
             CancelJump();
-            justDroppedPlatform.gameObject.layer = 0;
+            droppingDropDownPlatform = true;
+            collisions.justDroppedPlatform.gameObject.layer = 0;
         }
         else if (jump && collisions.below && attachmentColliders.Count == 0) //Regular Jump
         {
@@ -423,7 +425,7 @@ public class Player : Characters {
 
                     if (Physics.Raycast(topCheckOrigin, Vector3.up, out secondHit, thisCollider.bounds.size.y + .11f /*.11f being a small margin*/, collisionMask))
                     {
-                        Debug.Log("Ground on top of ledge, aborting ledge grab attempt.");
+                        //Debug.Log("Ground on top of ledge, aborting ledge grab attempt.");
                     }
                     else
                     {
@@ -490,7 +492,7 @@ public class Player : Characters {
 
     void DropDownPlatformsBehaviour(ref Vector3 a_moveDirection)
     {
-        if (justDroppedPlatform != null && jumping)
+        if (collisions.getThroughAbove && jumping)
         {
             Debug.Log("Climbing for real lol");
             climbingDropDownPlatform = true;
@@ -502,19 +504,20 @@ public class Player : Characters {
             _moveDirection.y = speed;
         }
 
-        if (justDroppedPlatform != null && CheckIfGotPastDropDownPlatform(ref a_moveDirection))
+        if ((climbingDropDownPlatform || droppingDropDownPlatform) && CheckIfGotPastDropDownPlatform(ref a_moveDirection))
         {
             Debug.Log("Got through drop down");
-            justDroppedPlatform.gameObject.layer = LayerMask.NameToLayer("Ground");
+            collisions.justDroppedPlatform.gameObject.layer = LayerMask.NameToLayer("Ground");
             _moveDirection.y = 0;
             climbingDropDownPlatform = false;
-            justDroppedPlatform = null;
+            droppingDropDownPlatform = false;
+            collisions.justDroppedPlatform = null;
         }
     }
 
     void CancelDropDownClimb()
     {
-        justDroppedPlatform = null;
+        collisions.justDroppedPlatform = null;
         climbingDropDownPlatform = false;
         CancelJump();
     }
