@@ -124,6 +124,13 @@ public class Characters : MonoBehaviour {
     //Main Move Method, this will effectively translate the position of the character
     public void ApplyMoveAndCollisions(Vector3 a_moveDirection)
     {
+        //Sprite flipping depending on direction
+        //Used before collisions calculations to avoid the wall pushing changing Pauline's direction
+        if (a_moveDirection.x < 0)
+            thisSprite.flipX = true;
+        else if (a_moveDirection.x > 0)
+            thisSprite.flipX = false;
+
         //Setting up raycasts and collisions infos for this frame, starting from a blank slate
         UpdateRaycastOrigins();
         collisions.Reset();
@@ -143,12 +150,6 @@ public class Characters : MonoBehaviour {
         //It'll call the APPLY Vertical Collisions Method on its own after some other checks
         if (a_moveDirection.y != 0)
             CheckVerticalCollisions(ref a_moveDirection);
-
-        //Sprite flipping depending on direction
-        if (a_moveDirection.x < 0)
-            thisSprite.flipX = true;
-        else if (a_moveDirection.x > 0)
-            thisSprite.flipX = false;
 
         //Not jumping anymore if we're going down
         if (a_moveDirection.y <= 0 && jumping)
