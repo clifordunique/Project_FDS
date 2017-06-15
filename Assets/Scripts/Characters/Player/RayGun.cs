@@ -144,15 +144,7 @@ public class RayGun : MonoBehaviour {
 
     void ComboParameters ()
     {
-        if (currentCombo >= 1)
-            RangeCombo();
-        else
-            currentRange = normalRange;
 
-        if (currentCombo >= 2)
-            currentDamage = damageComboAmount;
-        else
-            currentDamage = normalDamage;
 
         if (coolDownTimer < coolDownDuration)
             coolDownTimer += Time.deltaTime;
@@ -190,6 +182,8 @@ public class RayGun : MonoBehaviour {
             }
         }
 
+
+
         if (rayActive && rayTimer <= rayDuration)
         {
             FiringRay(rayDirection);
@@ -200,9 +194,19 @@ public class RayGun : MonoBehaviour {
             rayActive = false;
             lineRenderer.enabled = false;
             alreadyTouchedInThisShot.Clear();
+
+            if (currentCombo >= 1)
+                RangeCombo();
+            else
+                currentRange = normalRange;
+
+            if (currentCombo >= 2)
+                currentDamage = damageComboAmount;
+            else
+                currentDamage = normalDamage;
         }
 
-        ComboTiming();
         ComboParameters();
+        ComboTiming();
     }
 }

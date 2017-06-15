@@ -495,7 +495,7 @@ public class Player : Characters {
     {
         if (collisions.getThroughAbove && jumping)
         {
-            Debug.Log("Climbing for real lol");
+            //Debug.Log("Climbing for real lol");
             climbingDropDownPlatform = true;
         }
 

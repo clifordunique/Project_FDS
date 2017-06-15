@@ -199,12 +199,7 @@ public class Characters : MonoBehaviour {
                     collisions.getThroughAbove = directionY == 1;
                     collisions.justDroppedPlatform = hit.collider;
 
-                    if (collisions.getThroughAbove)
-                    {
-                        Debug.Log("Climbing get through platform");
-                    }
-                    else
-                    if (collisions.getThroughBelow)
+                    if (!collisions.getThroughAbove && collisions.getThroughBelow)
                         ApplyVerticalCollision(ref moveDirection, ref directionY, ref rayLength, ref hit);
                 }
                 else
