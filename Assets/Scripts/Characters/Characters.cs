@@ -64,8 +64,7 @@ public class Characters : MonoBehaviour {
     #region external components
     [HideInInspector]
     public CharactersSharedVariables sharedVariables;
-    [HideInInspector]
-    public Collider justDroppedPlatform = null;
+
     #endregion
 
     #region Collisions Structs
@@ -80,6 +79,7 @@ public class Characters : MonoBehaviour {
         public bool above, below;
         public bool left, right;
         public bool getThroughAbove, getThroughBelow;
+        public Collider justDroppedPlatform;
 
         public bool climbingSlope;
         public bool descendingSlope;
@@ -94,6 +94,7 @@ public class Characters : MonoBehaviour {
             above = below = false;
             left = right = false;
             getThroughAbove = getThroughBelow = false;
+            //justDroppedPlatform = null;
 
             climbingSlope = false;
             descendingSlope = false;
@@ -123,6 +124,13 @@ public class Characters : MonoBehaviour {
     //Main Move Method, this will effectively translate the position of the character
     public void ApplyMoveAndCollisions(Vector3 a_moveDirection)
     {
+        //Sprite flipping depending on direction
+        //Used before collisions calculations to avoid the wall pushing changing Pauline's direction
+        if (a_moveDirection.x < 0)
+            thisSprite.flipX = true;
+        else if (a_moveDirection.x > 0)
+            thisSprite.flipX = false;
+
         //Setting up raycasts and collisions infos for this frame, starting from a blank slate
         UpdateRaycastOrigins();
         collisions.Reset();
@@ -142,12 +150,6 @@ public class Characters : MonoBehaviour {
         //It'll call the APPLY Vertical Collisions Method on its own after some other checks
         if (a_moveDirection.y != 0)
             CheckVerticalCollisions(ref a_moveDirection);
-
-        //Sprite flipping depending on direction
-        if (a_moveDirection.x < 0)
-            thisSprite.flipX = true;
-        else if (a_moveDirection.x > 0)
-            thisSprite.flipX = false;
 
         //Not jumping anymore if we're going down
         if (a_moveDirection.y <= 0 && jumping)
@@ -195,12 +197,9 @@ public class Characters : MonoBehaviour {
                 {
                     collisions.getThroughBelow = directionY == -1;
                     collisions.getThroughAbove = directionY == 1;
-                    justDroppedPlatform = hit.collider;
+                    collisions.justDroppedPlatform = hit.collider;
 
-                    if (collisions.getThroughAbove)
-                        Debug.Log("Climbing get trhough platform");
-                    else
-                    if (collisions.getThroughBelow)
+                    if (!collisions.getThroughAbove && collisions.getThroughBelow)
                         ApplyVerticalCollision(ref moveDirection, ref directionY, ref rayLength, ref hit);
                 }
                 else
@@ -346,9 +345,9 @@ public class Characters : MonoBehaviour {
 
     public bool CheckIfGotPastDropDownPlatform(ref Vector3 moveDirection)
     {
-        if (thisCollider.bounds.max.y <= justDroppedPlatform.bounds.min.y - .1f && moveDirection.y < 0)
+        if (thisCollider.bounds.max.y <= collisions.justDroppedPlatform.bounds.min.y - .01f && moveDirection.y < 0)
             return true;
-        else if (thisCollider.bounds.min.y >= justDroppedPlatform.bounds.max.y + .1f && moveDirection.y > 0)
+        else if (thisCollider.bounds.min.y >= collisions.justDroppedPlatform.bounds.max.y + .01f && moveDirection.y > 0)
             return true;
         else
             return false;

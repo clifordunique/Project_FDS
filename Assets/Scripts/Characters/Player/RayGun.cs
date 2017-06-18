@@ -18,6 +18,8 @@ public class RayGun : MonoBehaviour {
     [SerializeField]
     LayerMask rayLayers;
     [SerializeField]
+    LayerMask obstacleLayers;
+    [SerializeField]
     float rayDuration = .3f;
     [SerializeField]
     float coolDownDuration = .5f;
@@ -98,18 +100,37 @@ public class RayGun : MonoBehaviour {
 
         //Debug.DrawRay(transform.position, rayDirection * currentRange, Color.black);
 
+
+
+        float realRange = currentRange;
+
+        RaycastHit obstructionHit;
+        if (Physics.Raycast(transform.position, rayDirection, out obstructionHit, currentRange, obstacleLayers))
+        {
+            realRange = Vector3.Magnitude(obstructionHit.point - transform.position);
+        }
+
         Vector3[] positions = new Vector3[2];
         positions[0] = transform.position;
-        positions[1] = positions[0] + rayDirection * currentRange;
+        positions[1] = positions[0] + rayDirection * realRange;
         lineRenderer.SetPositions(positions);
 
-        RaycastHit[] hit = Physics.RaycastAll(ray, currentRange, rayLayers);
+        RaycastHit[] hit = Physics.RaycastAll(ray, realRange, rayLayers);
+
 
         if (hit.Length > 0)
         {
+            foreach (RaycastHit singleHit in hit)
+            {
+                if (singleHit.transform.gameObject.layer != SortingLayer.GetLayerValueFromName("CharacterHitBox"))
+                {
+                } 
+            }
+
             //Touched enemy or energized device
             foreach (RaycastHit singleHit in hit)
             {
+
                 if (!alreadyTouchedInThisShot.Contains(singleHit.transform.gameObject))
                 {
                     if (currentCombo < 2)
@@ -144,15 +165,7 @@ public class RayGun : MonoBehaviour {
 
     void ComboParameters ()
     {
-        if (currentCombo >= 1)
-            RangeCombo();
-        else
-            currentRange = normalRange;
 
-        if (currentCombo >= 2)
-            currentDamage = damageComboAmount;
-        else
-            currentDamage = normalDamage;
 
         if (coolDownTimer < coolDownDuration)
             coolDownTimer += Time.deltaTime;
@@ -190,6 +203,8 @@ public class RayGun : MonoBehaviour {
             }
         }
 
+
+
         if (rayActive && rayTimer <= rayDuration)
         {
             FiringRay(rayDirection);
@@ -200,9 +215,19 @@ public class RayGun : MonoBehaviour {
             rayActive = false;
             lineRenderer.enabled = false;
             alreadyTouchedInThisShot.Clear();
+
+            if (currentCombo >= 1)
+                RangeCombo();
+            else
+                currentRange = normalRange;
+
+            if (currentCombo >= 2)
+                currentDamage = damageComboAmount;
+            else
+                currentDamage = normalDamage;
         }
 
-        ComboTiming();
         ComboParameters();
+        ComboTiming();
     }
 }

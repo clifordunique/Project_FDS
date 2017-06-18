@@ -67,6 +67,7 @@ public class Player : Characters {
 
     //Misc state
     bool climbingDropDownPlatform = false;
+    bool droppingDropDownPlatform = false;
     #endregion
 
     #region Processing Vars
@@ -159,7 +160,7 @@ public class Player : Characters {
             PostDashAttached();
 
         //Neutralizing Y moves when grounded, or head hitting ceiling or dashing
-        if ( (collisions.above && !collisions.getThroughAbove) || collisions.below || attachmentColliders.Count > 0)
+        if ((collisions.above && !collisions.getThroughAbove) || collisions.below || attachmentColliders.Count > 0)
         {
             _moveDirection.y = 0;
         }
@@ -177,13 +178,15 @@ public class Player : Characters {
             Crouch();
         else
             Stand();
-
-        if (collisions.getThroughBelow && crouching && jump) //Drop Down Platforms
+        //Drop Down Platforms
+        if (collisions.getThroughBelow && crouching && jump)
         {
             CancelJump();
-            justDroppedPlatform.gameObject.layer = 0;
+            droppingDropDownPlatform = true;
+            collisions.justDroppedPlatform.gameObject.layer = 0;
         }
-        else if (jump && collisions.below && attachmentColliders.Count == 0) //Regular Jump
+        //Regular Jump
+        else if (jump && collisions.below && attachmentColliders.Count == 0) 
         {
             _moveDirection.y = calculatedJumpForce;
             jumping = true;
@@ -231,7 +234,7 @@ public class Player : Characters {
         {
             swallJmupTimer += Time.deltaTime;
             input.x = swallJmupDirection;
-            Debug.Log("Swall Jmuping");
+            //Debug.Log("Swall Jmuping");
             jump = false;
             mdr.gameObject.SetActive(true);
         }
@@ -330,7 +333,7 @@ public class Player : Characters {
         //Finish Dash
         if (dashTimer > dashDuration)
         {
-            Debug.Log("Finishing dash");
+            //Debug.Log("Finishing dash");
             StopAndResetDashNGrab(false);
         }
     }
@@ -423,11 +426,11 @@ public class Player : Characters {
 
                     if (Physics.Raycast(topCheckOrigin, Vector3.up, out secondHit, thisCollider.bounds.size.y + .11f /*.11f being a small margin*/, collisionMask))
                     {
-                        Debug.Log("Ground on top of ledge, aborting ledge grab attempt.");
+                        //Debug.Log("Ground on top of ledge, aborting ledge grab attempt.");
                     }
                     else
                     {
-                        Debug.Log("Start climbing ledge");
+                        //Debug.Log("Start climbing ledge");
                         ClimbingLedge = true;
                         CurrentLedgeYPos = hit.point.y;
                         CancelJump();
@@ -490,9 +493,9 @@ public class Player : Characters {
 
     void DropDownPlatformsBehaviour(ref Vector3 a_moveDirection)
     {
-        if (justDroppedPlatform != null && jumping)
+        if (collisions.getThroughAbove && jumping)
         {
-            Debug.Log("Climbing for real lol");
+            //Debug.Log("Climbing for real lol");
             climbingDropDownPlatform = true;
         }
 
@@ -502,19 +505,24 @@ public class Player : Characters {
             _moveDirection.y = speed;
         }
 
-        if (justDroppedPlatform != null && CheckIfGotPastDropDownPlatform(ref a_moveDirection))
+        if ((climbingDropDownPlatform || droppingDropDownPlatform) && CheckIfGotPastDropDownPlatform(ref a_moveDirection))
         {
-            Debug.Log("Got through drop down");
-            justDroppedPlatform.gameObject.layer = LayerMask.NameToLayer("Ground");
-            _moveDirection.y = 0;
+            //Debug.Log("Got through drop down");
+            collisions.justDroppedPlatform.gameObject.layer = LayerMask.NameToLayer("Ground");
+
+            //Stopping the ascension if this is a climb
+            if(climbingDropDownPlatform)
+                _moveDirection.y = 0;
+
             climbingDropDownPlatform = false;
-            justDroppedPlatform = null;
+            droppingDropDownPlatform = false;
+            collisions.justDroppedPlatform = null;
         }
     }
 
     void CancelDropDownClimb()
     {
-        justDroppedPlatform = null;
+        collisions.justDroppedPlatform = null;
         climbingDropDownPlatform = false;
         CancelJump();
     }

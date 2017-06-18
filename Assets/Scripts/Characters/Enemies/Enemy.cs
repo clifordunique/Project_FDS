@@ -205,7 +205,7 @@ public class Enemy : Characters {
         else
         {
             moveDirection.x = 0;
-            Debug.Log("Close to Player");
+            //Debug.Log("Close to Player");
         }
     }
 
