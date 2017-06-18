@@ -176,7 +176,8 @@ public class Player : Characters {
         //Crouch & Stand
         if (input.y < 0 && collisions.below && _moveDirection.y == 0)
             Crouch();
-        else if (!Physics.Raycast(thisCollider.bounds.center, standingColliderSize / 2, collisionMask))
+        else if (!Physics.Raycast(new Vector3 (thisCollider.bounds.min.x, thisCollider.bounds.min.y, thisCollider.bounds.center.z), Vector3.up, standingColliderSize.y / 2, collisionMask) 
+            && !Physics.Raycast(new Vector3 (thisCollider.bounds.max.x, thisCollider.bounds.min.y, thisCollider.bounds.center.z), Vector3.up, standingColliderSize.y / 2, collisionMask))
             Stand();
         //Drop Down Platforms
         if (collisions.getThroughBelow && crouching && jump)
