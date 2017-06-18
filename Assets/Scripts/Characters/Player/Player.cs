@@ -176,7 +176,7 @@ public class Player : Characters {
         //Crouch & Stand
         if (input.y < 0 && collisions.below && _moveDirection.y == 0)
             Crouch();
-        else
+        else if (!Physics.Raycast(thisCollider.bounds.center, standingColliderSize / 2, collisionMask))
             Stand();
         //Drop Down Platforms
         if (collisions.getThroughBelow && crouching && jump)
@@ -269,6 +269,7 @@ public class Player : Characters {
         }
 
         crouching = true;
+        CalculateRaySpacing();
     }
 
     void Stand()
@@ -277,6 +278,7 @@ public class Player : Characters {
         thisCollider.GetComponent<BoxCollider>().size = standingColliderSize;
         crouching = false;
         thisSprite.transform.rotation = Quaternion.identity;
+        CalculateRaySpacing();
     }
     #endregion
 
