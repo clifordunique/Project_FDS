@@ -173,12 +173,27 @@ public class Player : Characters {
             }
         }
 
+
+
         //Crouch & Stand
         if (input.y < 0 && collisions.below && _moveDirection.y == 0)
             Crouch();
-        else if (!Physics.Raycast(new Vector3 (thisCollider.bounds.min.x, thisCollider.bounds.min.y, thisCollider.bounds.center.z), Vector3.up, standingColliderSize.y / 2, collisionMask) 
-            && !Physics.Raycast(new Vector3 (thisCollider.bounds.max.x, thisCollider.bounds.min.y, thisCollider.bounds.center.z), Vector3.up, standingColliderSize.y / 2, collisionMask))
-            Stand();
+        else
+        {
+            RaycastHit[] canStandCheck = new RaycastHit[2];
+
+            Physics.Raycast(new Vector3(thisCollider.bounds.min.x, thisCollider.bounds.min.y, thisCollider.bounds.center.z), Vector3.up, out canStandCheck[0], standingColliderSize.y / 2, collisionMask);
+            Physics.Raycast(new Vector3(thisCollider.bounds.max.x, thisCollider.bounds.min.y, thisCollider.bounds.center.z), Vector3.up, out canStandCheck[1], standingColliderSize.y / 2, collisionMask);
+
+            foreach (RaycastHit hit in canStandCheck)
+            {
+                if ((hit.transform != null && hit.transform.CompareTag("GoThroughPlatform")) || hit.transform == null)
+                {
+                    Stand();
+                    break;
+                }
+            }
+        }
         //Drop Down Platforms
         if (collisions.getThroughBelow && crouching && jump)
         {
