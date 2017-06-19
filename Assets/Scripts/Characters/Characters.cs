@@ -94,7 +94,6 @@ public class Characters : MonoBehaviour {
             above = below = false;
             left = right = false;
             getThroughAbove = getThroughBelow = false;
-            //justDroppedPlatform = null;
 
             climbingSlope = false;
             descendingSlope = false;
@@ -197,7 +196,14 @@ public class Characters : MonoBehaviour {
                 {
                     collisions.getThroughBelow = directionY == -1;
                     collisions.getThroughAbove = directionY == 1;
-                    collisions.justDroppedPlatform = hit.collider;
+
+                    if (collisions.justDroppedPlatform == null)
+                        collisions.justDroppedPlatform = hit.collider;
+                    else
+                    {
+                        collisions.justDroppedPlatform.gameObject.layer = LayerMask.NameToLayer("Ground");
+                        collisions.justDroppedPlatform = hit.collider;
+                    }
 
                     if (!collisions.getThroughAbove && collisions.getThroughBelow)
                         ApplyVerticalCollision(ref moveDirection, ref directionY, ref rayLength, ref hit);

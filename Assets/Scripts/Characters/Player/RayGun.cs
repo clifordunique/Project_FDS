@@ -184,7 +184,7 @@ public class RayGun : MonoBehaviour {
             {
                 rayActive = true;
                 lineRenderer.enabled = true;
-
+                comboTimer = 0; //Combo Cool Down is cancelled if we can fire
                 coolDownTimer = 0;
 
                 if (Input.GetButtonDown("RayGun"))
@@ -195,7 +195,6 @@ public class RayGun : MonoBehaviour {
                 }
                 else if (Input.GetButtonDown("RayGunSecondary"))
                 {
-                    //lineRenderer.colorGradient = Gradient.;
                     lineRenderer.startColor = Color.green;
                     lineRenderer.endColor = Color.green;
                     secondaryFire = true;
@@ -203,7 +202,16 @@ public class RayGun : MonoBehaviour {
             }
         }
 
+        //Combo management
+        if (currentCombo >= 1)
+            RangeCombo();
+        else
+            currentRange = normalRange;
 
+        if (currentCombo >= 2)
+            currentDamage = damageComboAmount;
+        else
+            currentDamage = normalDamage;
 
         if (rayActive && rayTimer <= rayDuration)
         {
@@ -215,16 +223,6 @@ public class RayGun : MonoBehaviour {
             rayActive = false;
             lineRenderer.enabled = false;
             alreadyTouchedInThisShot.Clear();
-
-            if (currentCombo >= 1)
-                RangeCombo();
-            else
-                currentRange = normalRange;
-
-            if (currentCombo >= 2)
-                currentDamage = damageComboAmount;
-            else
-                currentDamage = normalDamage;
         }
 
         ComboParameters();

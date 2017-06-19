@@ -173,11 +173,27 @@ public class Player : Characters {
             }
         }
 
+
+
         //Crouch & Stand
         if (input.y < 0 && collisions.below && _moveDirection.y == 0)
             Crouch();
         else
-            Stand();
+        {
+            RaycastHit[] canStandCheck = new RaycastHit[2];
+
+            Physics.Raycast(new Vector3(thisCollider.bounds.min.x, thisCollider.bounds.min.y, thisCollider.bounds.center.z), Vector3.up, out canStandCheck[0], standingColliderSize.y / 2, collisionMask);
+            Physics.Raycast(new Vector3(thisCollider.bounds.max.x, thisCollider.bounds.min.y, thisCollider.bounds.center.z), Vector3.up, out canStandCheck[1], standingColliderSize.y / 2, collisionMask);
+
+            foreach (RaycastHit hit in canStandCheck)
+            {
+                if ((hit.transform != null && hit.transform.CompareTag("GoThroughPlatform")) || hit.transform == null)
+                {
+                    Stand();
+                    break;
+                }
+            }
+        }
         //Drop Down Platforms
         if (collisions.getThroughBelow && crouching && jump)
         {
@@ -230,7 +246,9 @@ public class Player : Characters {
     //This will actually force the X direction for a small amount of time while Pauline is swall jmuping
     void ContinueSwallJmup ()
     {
-        if (swallJmupTimer < swallJmupDuration)
+        bool oppositeWallTouchCheck = swallJmupDirection == 1 ? collisions.right : collisions.left;
+
+        if (swallJmupTimer < swallJmupDuration && !oppositeWallTouchCheck)
         {
             swallJmupTimer += Time.deltaTime;
             input.x = swallJmupDirection;
@@ -238,8 +256,9 @@ public class Player : Characters {
             jump = false;
             mdr.gameObject.SetActive(true);
         }
-        else
+        else //Stop swall jmup
         {
+            Debug.Log("Swall Jmup end");
             swallJmuping = false;
             mdr.gameObject.SetActive(false);
         }
@@ -269,6 +288,7 @@ public class Player : Characters {
         }
 
         crouching = true;
+        CalculateRaySpacing();
     }
 
     void Stand()
@@ -277,6 +297,7 @@ public class Player : Characters {
         thisCollider.GetComponent<BoxCollider>().size = standingColliderSize;
         crouching = false;
         thisSprite.transform.rotation = Quaternion.identity;
+        CalculateRaySpacing();
     }
     #endregion
 
