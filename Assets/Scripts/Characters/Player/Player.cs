@@ -246,7 +246,9 @@ public class Player : Characters {
     //This will actually force the X direction for a small amount of time while Pauline is swall jmuping
     void ContinueSwallJmup ()
     {
-        if (swallJmupTimer < swallJmupDuration)
+        bool oppositeWallTouchCheck = swallJmupDirection == 1 ? collisions.right : collisions.left;
+
+        if (swallJmupTimer < swallJmupDuration && !oppositeWallTouchCheck)
         {
             swallJmupTimer += Time.deltaTime;
             input.x = swallJmupDirection;
@@ -254,8 +256,9 @@ public class Player : Characters {
             jump = false;
             mdr.gameObject.SetActive(true);
         }
-        else
+        else //Stop swall jmup
         {
+            Debug.Log("Swall Jmup end");
             swallJmuping = false;
             mdr.gameObject.SetActive(false);
         }

@@ -120,6 +120,12 @@ public class Enemy : Characters {
                     break;
             }
         }
+        else if (!energized)
+        {
+            ExclamationPoint.gameObject.SetActive(false);
+            QuestionMark.gameObject.SetActive(false);
+            currentBehaviour = BehaviourStates.Patrol;
+        }
 
         UpdateStateTriggers();
 
