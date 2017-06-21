@@ -12,9 +12,19 @@ public class EnnemyVision : MonoBehaviour {
     [SerializeField]
     float sigthRange = 10f;
     [SerializeField]
-    float sightAngle = 45f;
+    float defaultSightAngle = 45f;
     [SerializeField]
-    LayerMask playerLayer;
+    LayerMask ignoredLayers;
+
+    public enum SightMode { Standard, Dynamic, SweepRotation };
+    public SightMode currentSightMode = SightMode.Standard;
+    #endregion
+
+    #region Sight Current State
+    Vector3 sightDirection;
+    float centerToTargetAngle = 0f;
+    float currentSightAngle;
+    bool ignoreAngleCheck = false;
     #endregion
 
     // Use this for initialization
@@ -23,32 +33,36 @@ public class EnnemyVision : MonoBehaviour {
         thisEnemy = transform.GetComponentInParent<Enemy>();
         sprite = transform.GetComponentInParent<SpriteRenderer>();
         player = GameObject.FindObjectOfType<Player>();
+
+        currentSightAngle = defaultSightAngle;
 	}
 	
 	// Update is called once per frame
 	void Update ()
     {
+        currentSightAngle = defaultSightAngle;
+
+
+        //Enemy is awake
         if (thisEnemy.energized)
         {
             float playerToEnemyDistance = Vector3.Magnitude(transform.position - player.transform.position);
-            float currentSightAngle = 0f;
-
             thisEnemy.PlayerInSight = false;
             drawDetectSphere = false;
+
+            //Player is in range
             if (playerToEnemyDistance <= sigthRange)
             {
-                //Debug.Log("Player is in sight range");
-                Vector3 sightDirection;
+                centerToTargetAngle = 0f;
 
-                if (sprite.flipX)
-                    sightDirection = transform.right;
-                else
-                    sightDirection = -transform.right;
+                SightModeManager();
 
-                currentSightAngle = Vector3.Angle(sightDirection, (transform.position - player.transform.position));
-                //Debug.Log(currentSightAngle);
+                Debug.DrawRay(thisEnemy.thisCollider.bounds.center, Quaternion.Euler(0, 0, centerToTargetAngle) * Vector3.right * sigthRange, Color.red);
+                Debug.DrawRay(thisEnemy.thisCollider.bounds.center, Quaternion.Euler(0, 0, defaultSightAngle /*+ centerToTargetAngle*/) * Vector3.right * sigthRange, Color.cyan);
+                Debug.DrawRay(thisEnemy.thisCollider.bounds.center, Quaternion.Euler(0, 0, /*centerToTargetAngle*/ -defaultSightAngle) * Vector3.right * sigthRange, Color.cyan);
 
-                if (currentSightAngle < sightAngle / 2)
+                //Player is in fov
+                if (ignoreAngleCheck || centerToTargetAngle <= currentSightAngle / 2)
                 {
                     RaycastHit hit;
                     List<Vector3> raytargets = new List<Vector3>();
@@ -61,10 +75,11 @@ public class EnnemyVision : MonoBehaviour {
 
                     foreach (Vector3 target in raytargets)
                     {
-                        if (!thisEnemy.PlayerInSight)
+                        if (!thisEnemy.PlayerInSight && !thisEnemy.touchingPlayer)
                         {
-                            if (Physics.Linecast(transform.position, target, out hit))
+                            if (Physics.Linecast(transform.position, target, out hit, ignoredLayers))
                             {
+                                //Testing view obstruction
                                 ConfirmPlayerIsInSight(hit);
                             }
                         }
@@ -75,6 +90,38 @@ public class EnnemyVision : MonoBehaviour {
             }
         }
 	}
+
+    void SightModeManager ()
+    {
+        ignoreAngleCheck = false; //By default
+
+        switch (currentSightMode)
+        {
+            case SightMode.Standard:
+                PatrolSight();
+            break;
+
+            case SightMode.Dynamic:
+                ChaseSight();
+            break;
+        }
+    }
+
+    void PatrolSight ()
+    {
+        if (sprite.flipX)
+            sightDirection = transform.right;
+        else
+            sightDirection = -transform.right;
+
+        centerToTargetAngle = Vector3.Angle(sightDirection, (transform.position - player.transform.position));
+    }
+
+    void ChaseSight()
+    {
+        ignoreAngleCheck = true;
+        centerToTargetAngle = Vector3.Angle(sightDirection, (transform.position - player.transform.position)); // Basically, when in chase mode, the player is always considered inside the FOV
+    }
 
     bool drawDetectSphere = false;
 
@@ -87,6 +134,8 @@ public class EnnemyVision : MonoBehaviour {
             //Debug.DrawLine(transform.position, hit.point, Color.red);
             //Debug.Log("PLAYER IN SIGHT");
         }
+        else
+            Debug.Log("View obstructed = " + hit.transform.name);
     }
 
     private void OnDrawGizmos()
@@ -94,5 +143,4 @@ public class EnnemyVision : MonoBehaviour {
         if (drawDetectSphere)
             Gizmos.DrawSphere(transform.position, .5f);
     }
-
 }

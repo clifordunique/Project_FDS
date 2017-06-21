@@ -131,7 +131,11 @@ public class Player : Characters {
         else
             LedgeGrab();
 
+
         //Dashing stuff
+        DashAirChecks();
+        //Debug.Log("Already dash in air = " + alreadyDashedInAir + " dashing = " + dashing + " below coll = " + collisions.below);
+
         if (!dashing)
         {
             //Dashing cooldown
@@ -172,8 +176,6 @@ public class Player : Characters {
                 _moveDirection.y = -CurrentYSpeedMaxClamp;
             }
         }
-
-
 
         //Crouch & Stand
         if (input.y < 0 && collisions.below && _moveDirection.y == 0)
@@ -374,7 +376,6 @@ public class Player : Characters {
         dashing = false;
         dashCoolDownTimer = 0f;
         dashTimer = 0f;
-        alreadyDashedInAir = false;
     }
 
     void PostGrabDetach()
@@ -397,6 +398,7 @@ public class Player : Characters {
         thisSprite.flipX = dashAttachment.GetComponentInParent<SpriteRenderer>().flipX;
         _moveDirection = Vector3.zero;
         transform.position = dashAttachment.transform.position;
+        alreadyDashedInAir = false;
 
         //Jumping from attachement
         if (jump)
@@ -476,6 +478,7 @@ public class Player : Characters {
         if (raycastOrigins.bottomLeft.y <= CurrentLedgeYPos)
         {
             ClimbingLedge = true;
+            swallJmuping = false;
             _moveDirection = transform.up * speed;
             //Debug.Log("Climbing Edge");
         }
@@ -526,6 +529,7 @@ public class Player : Characters {
         if (collisions.getThroughAbove && jumping)
         {
             //Debug.Log("Climbing for real lol");
+            swallJmuping = false;
             climbingDropDownPlatform = true;
         }
 
