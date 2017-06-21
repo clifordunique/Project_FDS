@@ -134,7 +134,7 @@ public class Player : Characters {
 
         //Dashing stuff
         DashAirChecks();
-        Debug.Log("Already dash in air = " + alreadyDashedInAir + " dashing = " + dashing + " below coll = " + collisions.below);
+        //Debug.Log("Already dash in air = " + alreadyDashedInAir + " dashing = " + dashing + " below coll = " + collisions.below);
 
         if (!dashing)
         {

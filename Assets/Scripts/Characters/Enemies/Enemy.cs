@@ -18,6 +18,8 @@ public class Enemy : Characters {
     #region Player Related Vars
     [HideInInspector]
     public bool PlayerInSight = false;
+    [HideInInspector]
+    public bool touchingPlayer = false;
     Player player;
     #endregion
 
@@ -46,6 +48,7 @@ public class Enemy : Characters {
     DashGrabPointOrientation grabbedScript;
     Transform ExclamationPoint;
     Transform QuestionMark;
+    EnnemyVision vision;
     #endregion
 
     void Start ()
@@ -65,6 +68,7 @@ public class Enemy : Characters {
 
         ExclamationPoint = transform.Find("ExclamationPoint");
         QuestionMark = transform.Find("QuestionMark");
+        vision = gameObject.GetComponentInChildren<EnnemyVision>();
 
         //Set the current health to the max possible
         currentHealthPoints = maxHealthPoints;
@@ -91,6 +95,7 @@ public class Enemy : Characters {
             switch (currentBehaviour)
             {
                 case BehaviourStates.Patrol:
+                    vision.currentSightMode = EnnemyVision.SightMode.Standard;
                     if (LinkedPath != null)
                         Patrol();
                     else
@@ -100,11 +105,13 @@ public class Enemy : Characters {
                     QuestionMark.gameObject.SetActive(false);
                     break;
                 case BehaviourStates.Chase:
+                    vision.currentSightMode = EnnemyVision.SightMode.Dynamic;
                     Chase();
                     ExclamationPoint.gameObject.SetActive(true);
                     QuestionMark.gameObject.SetActive(false);
                     break;
                 case BehaviourStates.LostTrack:
+                    vision.currentSightMode = EnnemyVision.SightMode.Standard;
                     GoToLastKnownPosition();
                     searchForPlayerTimer += Time.deltaTime;
 
@@ -152,14 +159,14 @@ public class Enemy : Characters {
         else
             energized = true;
 
-        if (PlayerInSight)
+        if (PlayerInSight || touchingPlayer)
         {
             currentBehaviour = BehaviourStates.Chase;
             targetLastKnownPosition = player.transform.position;
         }
 
         //Just lost sight of player
-        if (currentBehaviour == BehaviourStates.Chase && !PlayerInSight)
+        if (currentBehaviour == BehaviourStates.Chase && !PlayerInSight && !touchingPlayer)
             currentBehaviour = BehaviourStates.LostTrack;
     }
 
@@ -244,6 +251,22 @@ public class Enemy : Characters {
         if (other.transform == currentWayPoint)
         {
             GetNextWayPoint();
+        }
+    }
+
+    private void OnTriggerStay(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            touchingPlayer = true;
+        }
+    }
+
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Player"))
+        {
+            touchingPlayer = false;
         }
     }
 }
