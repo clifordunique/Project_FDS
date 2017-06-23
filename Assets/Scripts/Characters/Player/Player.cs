@@ -96,9 +96,6 @@ public class Player : Characters {
 
         //Collisions & Physics base calculation
         CalculateRaySpacing();
-
-        calculatedGravity = -(2 * jumpHeight) / Mathf.Pow(timeToJumpApex, 2);
-        calculatedJumpForce = Mathf.Abs(calculatedGravity) * timeToJumpApex;
     }
 
     private void Update()

@@ -5,6 +5,8 @@ using UnityEngine;
 
 //Sebastian Lague on Youtube, kudos to his 2D CharController tuto!
 public class Characters : MonoBehaviour {
+    [Header("---!DEV MODE!---")]
+    public bool ImmediateTestMode = false;
 
     #region Basic Moves Inspector Variables
     [Header ("Basic moves options")]
@@ -118,7 +120,23 @@ public class Characters : MonoBehaviour {
 
         if (sharedVariables == null)
             Debug.LogError ("The scene is missing the CharacterSharedVariables class, please check your current GameObjects");
+
+        CalculateGravityAndJump();
 	}
+
+    void CalculateGravityAndJump ()
+    {
+        calculatedGravity = -(2 * jumpHeight) / Mathf.Pow(timeToJumpApex, 2);
+        calculatedJumpForce = Mathf.Abs(calculatedGravity) * timeToJumpApex;
+    }
+
+    private void LateUpdate()
+    {
+    #if UNITY_EDITOR
+        if (ImmediateTestMode)
+            CalculateGravityAndJump();
+    #endif
+    }
 
     //Main Move Method, this will effectively translate the position of the character
     public void ApplyMoveAndCollisions(Vector3 a_moveDirection)

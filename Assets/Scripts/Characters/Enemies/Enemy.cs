@@ -79,11 +79,6 @@ public class Enemy : Characters {
 
         //Collisions & Physics base calculation
         CalculateRaySpacing();
-
-        calculatedGravity = -(2 * jumpHeight) / Mathf.Pow(timeToJumpApex, 2);
-        calculatedJumpForce = Mathf.Abs(calculatedGravity) * timeToJumpApex;
-
-
     }
 	
 	// Update is called once per frame
