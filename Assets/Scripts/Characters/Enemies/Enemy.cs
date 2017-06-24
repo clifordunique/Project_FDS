@@ -13,6 +13,10 @@ public class Enemy : Characters {
     int maxHealthPoints = 3;
     [SerializeField]
     GameObject LinkedPath;
+    [SerializeField]
+    bool FlyingEnemy = false;
+    [SerializeField]
+    float flightYSpeed;
     #endregion
 
     #region Player Related Vars
@@ -133,14 +137,19 @@ public class Enemy : Characters {
 
         moveDirection.x *= speed;
 
-        //Neutralizing Y moves when grounded, or head hitting ceiling or dashing
-        if ((collisions.above && !collisions.getThroughAbove) || collisions.below)
+        if (FlyingEnemy)
+            moveDirection.y *= flightYSpeed;
+
+        //Neutralizing Y moves when grounded, or head hitting ceiling or dashing*
+        if (!FlyingEnemy)
         {
-            moveDirection.y = 0;
+            if ((collisions.above && !collisions.getThroughAbove) || collisions.below)
+            {
+                moveDirection.y = 0;
+            }
+
+            moveDirection.y += calculatedGravity * Time.deltaTime;
         }
-
-        moveDirection.y += calculatedGravity * Time.deltaTime;
-
 
         if(!player.dashAttachment == grabbedScript.gameObject)
             ApplyMoveAndCollisions(moveDirection * Time.deltaTime);
@@ -198,6 +207,9 @@ public class Enemy : Characters {
         targetMove = targetMove.normalized;
 
         moveDirection.x = targetMove.x;
+
+        if (FlyingEnemy)
+            moveDirection.y = targetMove.y;
     }
 
     void Chase()
@@ -209,10 +221,15 @@ public class Enemy : Characters {
             targetMove = player.transform.position - transform.position;
             targetMove = targetMove.normalized;
             moveDirection.x = targetMove.x;
+            if (FlyingEnemy)
+                moveDirection.y = targetMove.y;
         }
         else
         {
             moveDirection.x = 0;
+
+            if (FlyingEnemy)
+                moveDirection.y = 0f;
             //Debug.Log("Close to Player");
         }
     }
@@ -223,6 +240,8 @@ public class Enemy : Characters {
         targetMove = targetMove.normalized;
 
         moveDirection.x = targetMove.x;
+        if (FlyingEnemy)
+            moveDirection.y = targetMove.y;
     }
     #endregion
 

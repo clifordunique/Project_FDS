@@ -15,6 +15,8 @@ public class EnnemyVision : MonoBehaviour {
     float defaultSightAngle = 45f;
     [SerializeField]
     LayerMask ignoredLayers;
+    [SerializeField]
+    bool displayVisionInGame = false;
 
     public enum SightMode { Standard, Dynamic, SweepRotation };
     public SightMode currentSightMode = SightMode.Standard;
@@ -41,7 +43,6 @@ public class EnnemyVision : MonoBehaviour {
 	void Update ()
     {
         currentSightAngle = defaultSightAngle;
-
 
         //Enemy is awake
         if (thisEnemy.energized)
@@ -88,8 +89,58 @@ public class EnnemyVision : MonoBehaviour {
                     }
                 }
             }
+
+            if (displayVisionInGame)
+                DisplayVision();
+
         }
 	}
+
+    void DisplayVision ()
+    {
+        MeshFilter  meshfilter = gameObject.GetComponent<MeshFilter>();
+        Mesh mesh = new Mesh();
+        meshfilter.mesh = mesh;
+
+        Vector3[] vertices = new Vector3[3];
+
+        Vector3 sideDir = Vector3.right;
+
+        if (thisEnemy.PlayerInSight)
+        {
+            sideDir = sightDirection;
+        }
+        else
+        {
+            if (!thisEnemy.thisSprite.flipX)
+                sideDir = transform.right;
+            else
+                sideDir = -transform.right;
+        }
+
+        vertices[0] = Vector3.zero;
+        vertices[1] = (Quaternion.Euler(0, 0, defaultSightAngle + centerToTargetAngle) * sideDir * sigthRange);
+        vertices[2] = (Quaternion.Euler(0, 0, centerToTargetAngle -defaultSightAngle) * sideDir * sigthRange);
+
+        mesh.vertices = vertices;
+
+        int[] tri = new int[3];
+
+        //  Lower left triangle.
+        tri[0] = 2;
+        tri[1] = 0;
+        tri[2] = 1;
+
+        mesh.triangles = tri;
+
+        Vector3[] normals  = new Vector3[3];
+
+        normals[0] = Vector3.forward;
+        normals[1] = Vector3.forward;
+        normals[2] = Vector3.forward;
+
+        mesh.normals = normals;
+    }
 
     void SightModeManager ()
     {
