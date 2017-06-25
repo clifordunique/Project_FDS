@@ -276,8 +276,10 @@ public class Player : Characters {
     #region StandNCrouch
     void Crouch ()
     {
-        thisCollider.GetComponent<BoxCollider>().center = new Vector3(0, -0.8156404f, 0);
-        thisCollider.GetComponent<BoxCollider>().size = new Vector3(.43f, 0.4187193f, .2f);
+        Vector3 previousCenter = standingColliderPos;
+        thisCollider.GetComponent<BoxCollider>().size = new Vector3(thisCollider.GetComponent<BoxCollider>().size.x, 0.4187193f, thisCollider.GetComponent<BoxCollider>().size.z);
+        float diffBetweenStandAndCrouchHeight = (standingColliderSize.y - thisCollider.GetComponent<BoxCollider>().size.y) / 2;
+        thisCollider.GetComponent<BoxCollider>().center = new Vector3 (0f, previousCenter.y - diffBetweenStandAndCrouchHeight, 0f);
 
         if (collisions.climbingSlope || collisions.descendingSlope)
         {
