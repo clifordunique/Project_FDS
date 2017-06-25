@@ -58,9 +58,7 @@ public class EnnemyVision : MonoBehaviour {
 
                 SightModeManager();
 
-                Debug.DrawRay(thisEnemy.thisCollider.bounds.center, Quaternion.Euler(0, 0, centerToTargetAngle) * Vector3.right * sigthRange, Color.red);
-                Debug.DrawRay(thisEnemy.thisCollider.bounds.center, Quaternion.Euler(0, 0, defaultSightAngle /*+ centerToTargetAngle*/) * Vector3.right * sigthRange, Color.cyan);
-                Debug.DrawRay(thisEnemy.thisCollider.bounds.center, Quaternion.Euler(0, 0, /*centerToTargetAngle*/ -defaultSightAngle) * Vector3.right * sigthRange, Color.cyan);
+                Debug.DrawRay(transform.position, sightDirection, Color.red);
 
                 //Player is in fov
                 if (ignoreAngleCheck || centerToTargetAngle <= currentSightAngle / 2)
@@ -119,8 +117,8 @@ public class EnnemyVision : MonoBehaviour {
         }
 
         vertices[0] = Vector3.zero;
-        vertices[1] = (Quaternion.Euler(0, 0, defaultSightAngle + centerToTargetAngle) * sideDir * sigthRange);
-        vertices[2] = (Quaternion.Euler(0, 0, centerToTargetAngle -defaultSightAngle) * sideDir * sigthRange);
+        vertices[1] = (Quaternion.Euler(0,0, defaultSightAngle) * sideDir * sigthRange);
+        vertices[2] = (Quaternion.Euler(0,0, -defaultSightAngle) * sideDir * sigthRange);
 
         mesh.vertices = vertices;
 
@@ -171,7 +169,6 @@ public class EnnemyVision : MonoBehaviour {
     void ChaseSight()
     {
         ignoreAngleCheck = true;
-        centerToTargetAngle = Vector3.Angle(sightDirection, (transform.position - player.transform.position)); // Basically, when in chase mode, the player is always considered inside the FOV
     }
 
     bool drawDetectSphere = false;
@@ -182,11 +179,8 @@ public class EnnemyVision : MonoBehaviour {
         {
             drawDetectSphere = true;
             thisEnemy.PlayerInSight = true;
-            //Debug.DrawLine(transform.position, hit.point, Color.red);
-            //Debug.Log("PLAYER IN SIGHT");
+            sightDirection = (player.transform.position - transform.position).normalized;
         }
-        else
-            Debug.Log("View obstructed = " + hit.transform.name);
     }
 
     private void OnDrawGizmos()
