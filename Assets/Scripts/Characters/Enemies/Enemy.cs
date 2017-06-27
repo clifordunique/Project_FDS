@@ -17,6 +17,8 @@ public class Enemy : Characters {
     bool FlyingEnemy = false;
     [SerializeField]
     float flightYSpeed;
+    [SerializeField]
+    bool useSweepSight = false;
     #endregion
 
     #region Player Related Vars
@@ -63,7 +65,12 @@ public class Enemy : Characters {
         else
         {
             UpdateWayPointList();
-            GetNextWayPoint();
+
+
+            if (wayPoints.Count == 0)
+                Debug.LogWarning("No waypoints in " + transform.name + ", deactivating patrol.");
+            else
+                GetNextWayPoint();
         }
 
         //Getting external stuff
@@ -94,8 +101,12 @@ public class Enemy : Characters {
             switch (currentBehaviour)
             {
                 case BehaviourStates.Patrol:
-                    vision.currentSightMode = EnnemyVision.SightMode.Standard;
-                    if (LinkedPath != null)
+                    if (!useSweepSight)
+                        vision.currentSightMode = EnnemyVision.SightMode.Standard;
+                    else
+                        vision.currentSightMode = EnnemyVision.SightMode.SweepRotation;
+
+                    if (LinkedPath != null && wayPoints.Count > 0)
                         Patrol();
                     else
                         moveDirection.x = 0f;
