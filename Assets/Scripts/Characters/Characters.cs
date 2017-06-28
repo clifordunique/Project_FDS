@@ -183,7 +183,7 @@ public class Characters : MonoBehaviour {
     #region Collision System Methods
     void ApplyVerticalCollision(ref Vector3 moveDirection, ref float directionY, ref float rayLength, ref RaycastHit hit)
     {
-        //Debug.DrawLine(transform.position, hit.point, Color.green);
+        Debug.Log("VERTICAL IT FOR " + transform.name);
         moveDirection.y = (hit.distance - skinWidth) * directionY;
         rayLength = hit.distance;
 
