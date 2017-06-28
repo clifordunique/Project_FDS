@@ -236,14 +236,13 @@ public class Enemy : Characters {
     void Chase()
     {
         Vector3 targetMove = Vector3.zero;
+        float targetTreshold = slowDownTreshold - minSpaceBetweenTargetWhileChasing;
 
         if (Mathf.Abs(player.transform.position.x - transform.position.x) > minSpaceBetweenTargetWhileChasing)
         {
             targetMove = player.transform.position - transform.position;
 
             float targetDistanceX = Mathf.Abs(player.transform.position.x - transform.position.x);
-
-            float targetTreshold = slowDownTreshold - minSpaceBetweenTargetWhileChasing;
 
             if (Mathf.Abs(player.transform.position.x - transform.position.x) < slowDownTreshold)
             {
@@ -258,7 +257,11 @@ public class Enemy : Characters {
                 targetMove.x = -1f;
 
             targetMove.x *= speed;
+        } else
+            targetMove.x = 0;
 
+        if(Mathf.Abs(player.transform.position.y - transform.position.y) > minSpaceBetweenTargetWhileChasing)
+        { 
             float targetDistanceY = Mathf.Abs(player.transform.position.y - transform.position.y);
 
             if (Mathf.Abs(player.transform.position.y - transform.position.y) < slowDownTreshold)
@@ -274,14 +277,13 @@ public class Enemy : Characters {
                 targetMove.y = -1f;
 
             targetMove.y *= speed;
-
-            rawDirection = targetMove;
         }
         else
         {
-            rawDirection = Vector3.zero;
+            targetMove.y = 0;
         }
 
+        rawDirection = targetMove;
         Debug.DrawRay(transform.position, rawDirection , Color.cyan);
     }
 
