@@ -1,4 +1,6 @@
-﻿using System.Collections;
+﻿using Spine;
+using Spine.Unity;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -283,7 +285,7 @@ public class Player : Characters {
 
         if (collisions.climbingSlope || collisions.descendingSlope)
         {
-            thisSprite.transform.rotation = Quaternion.identity; //This is to remove once I'm going to start working on the crouch orientation again...
+            //thisSprite.transform.rotation = Quaternion.identity; //This is to remove once I'm going to start working on the crouch orientation again...
             /*
             //TODO : Fix this with the new slope detection system
             if(!mirrorSlope)
@@ -294,7 +296,7 @@ public class Player : Characters {
         }
         else
         {
-            thisSprite.transform.rotation = Quaternion.identity;
+            //thisSprite.transform.rotation = Quaternion.identity;
         }
 
         crouching = true;
@@ -306,7 +308,7 @@ public class Player : Characters {
         thisCollider.GetComponent<BoxCollider>().center = standingColliderPos;
         thisCollider.GetComponent<BoxCollider>().size = standingColliderSize;
         crouching = false;
-        thisSprite.transform.rotation = Quaternion.identity;
+        //thisSprite.transform.rotation = Quaternion.identity;
         CalculateRaySpacing();
     }
     #endregion
@@ -319,14 +321,14 @@ public class Player : Characters {
         //If no direction was given by input
         if (Mathf.Abs(dashDirection.x) < 0.5f)
         {
-            if (thisSprite.flipX == true)
+            if (SpineSkeleton.FlipX == true)
             {
-                thisSprite.flipX = false;
+                SpineSkeleton.FlipX = false;
                 dashDirection = transform.right;
             }
             else
             {
-                thisSprite.flipX = true;
+                SpineSkeleton.FlipX = true;
                 dashDirection = -transform.right;
             }
         }
@@ -344,7 +346,7 @@ public class Player : Characters {
         //If no direction given by input
         if (Mathf.Abs(dashDirection.x) < .5f)
         {
-            if (thisSprite.flipX == true)
+            if (SpineSkeleton.FlipX == true)
                 dashDirection = -transform.right;
             else
                 dashDirection = transform.right;
@@ -394,7 +396,7 @@ public class Player : Characters {
 
     void PostDashAttached ()
     {
-        thisSprite.flipX = dashAttachment.GetComponentInParent<SpriteRenderer>().flipX;
+        SpineSkeleton.FlipX = dashAttachment.GetComponentInParent<SpriteRenderer>().flipX;
         _moveDirection = Vector3.zero;
         transform.position = dashAttachment.transform.position;
         alreadyDashedInAir = false;
@@ -495,15 +497,15 @@ public class Player : Characters {
         if (Input.GetButtonDown("Jump")) //Cancelling Ledge Grab with a wall jump
         {
             CurrentYSpeedMaxClamp = 0f;
-            if (thisSprite.flipX)
+            if (SpineSkeleton.FlipX)
             {
                 swallJmupDirection = 1;
-                thisSprite.flipX = false;
+                SpineSkeleton.FlipX = false;
             }
             else
             {
                 swallJmupDirection = -1;
-                thisSprite.flipX = true;
+                SpineSkeleton.FlipX = true;
             }
 
             swallJmupTimer = 0f;
@@ -521,6 +523,10 @@ public class Player : Characters {
     {
         animator.SetBool("Crouching", crouching);
         animator.SetBool("Dashing", dashing);
+        animator.SetFloat("OutSpeed", Mathf.Abs (_moveDirection.x));
+        animator.SetBool("Grounded", collisions.below);
+        animator.SetFloat("InputDir", Mathf.Abs(Input.GetAxisRaw("Horizontal")));
+        animator.SetFloat("DashDuration", dashDuration / 100);
     }
 
     void DropDownPlatformsBehaviour(ref Vector3 a_moveDirection)
