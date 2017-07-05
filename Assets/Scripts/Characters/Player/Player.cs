@@ -98,6 +98,16 @@ public class Player : Characters {
 
         //Collisions & Physics base calculation
         CalculateRaySpacing();
+
+        SpineSkeletonAnimator = gameObject.GetComponentInChildren<SkeletonAnimator>();
+
+        if (SpineSkeletonAnimator != null)
+            SpineSkeleton = SpineSkeletonAnimator.skeleton;
+        else
+            Debug.LogWarning(transform.name + " is missing it's Spine Skeleton Animator");
+
+        //if (SpineSkeleton == null)
+        Debug.Log(transform.name + " + " + SpineSkeleton);
     }
 
     private void Update()

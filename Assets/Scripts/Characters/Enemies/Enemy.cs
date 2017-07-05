@@ -235,56 +235,73 @@ public class Enemy : Characters {
 
     void Chase()
     {
-        Vector3 targetMove = Vector3.zero;
-        float targetTreshold = slowDownTreshold - minSpaceBetweenTargetWhileChasing;
-
-        if (Mathf.Abs(player.transform.position.x - transform.position.x) > minSpaceBetweenTargetWhileChasing)
-        {
-            targetMove = player.transform.position - transform.position;
-
-            float targetDistanceX = Mathf.Abs(player.transform.position.x - transform.position.x);
-
-            if (Mathf.Abs(player.transform.position.x - transform.position.x) < slowDownTreshold)
-            {
-                targetDistanceX -= minSpaceBetweenTargetWhileChasing;
-                targetDistanceX /= targetTreshold;
-                targetMove.x = Mathf.Sign(targetMove.x) * targetDistanceX;
-            }
-
-            if (targetMove.x > 1)
-                targetMove.x = 1;
-            else if (targetMove.x < -1)
-                targetMove.x = -1f;
-
-            targetMove.x *= speed;
-        } else
-            targetMove.x = 0;
-
-        if(Mathf.Abs(player.transform.position.y - transform.position.y) > minSpaceBetweenTargetWhileChasing)
-        { 
-            float targetDistanceY = Mathf.Abs(player.transform.position.y - transform.position.y);
-
-            if (Mathf.Abs(player.transform.position.y - transform.position.y) < slowDownTreshold)
-            {
-                targetDistanceY -= minSpaceBetweenTargetWhileChasing;
-                targetDistanceY /= targetTreshold;
-                targetMove.y = Mathf.Sign(targetMove.y) * targetDistanceY;
-            }
-
-            if (targetMove.y > 1)
-                targetMove.y = 1;
-            else if (targetMove.y < -1)
-                targetMove.y = -1f;
-
-            targetMove.y *= speed;
-        }
+        if (FlyingEnemy)
+            FlyChase();
         else
         {
-            targetMove.y = 0;
-        }
+            Vector3 targetMove = Vector3.zero;
+            float targetTreshold = slowDownTreshold - minSpaceBetweenTargetWhileChasing;
 
-        rawDirection = targetMove;
-        Debug.DrawRay(transform.position, rawDirection , Color.cyan);
+            if (Mathf.Abs(player.transform.position.x - transform.position.x) > minSpaceBetweenTargetWhileChasing)
+            {
+                targetMove = player.transform.position - transform.position;
+
+                float targetDistanceX = Mathf.Abs(player.transform.position.x - transform.position.x);
+
+                if (Mathf.Abs(player.transform.position.x - transform.position.x) < slowDownTreshold)
+                {
+                    targetDistanceX -= minSpaceBetweenTargetWhileChasing;
+                    targetDistanceX /= targetTreshold;
+                    targetMove.x = Mathf.Sign(targetMove.x) * targetDistanceX;
+                }
+
+                if (targetMove.x > 1)
+                    targetMove.x = 1;
+                else if (targetMove.x < -1)
+                    targetMove.x = -1f;
+
+                targetMove.x *= speed;
+            }
+            else
+                targetMove.x = 0;
+
+            if (Mathf.Abs(player.transform.position.y - transform.position.y) > minSpaceBetweenTargetWhileChasing)
+            {
+                float targetDistanceY = Mathf.Abs(player.transform.position.y - transform.position.y);
+
+                if (Mathf.Abs(player.transform.position.y - transform.position.y) < slowDownTreshold)
+                {
+                    targetDistanceY -= minSpaceBetweenTargetWhileChasing;
+                    targetDistanceY /= targetTreshold;
+                    targetMove.y = Mathf.Sign(targetMove.y) * targetDistanceY;
+                }
+
+                if (targetMove.y > 1)
+                    targetMove.y = 1;
+                else if (targetMove.y < -1)
+                    targetMove.y = -1f;
+
+                targetMove.y *= speed;
+            }
+            else
+            {
+                targetMove.y = 0;
+            }
+
+            rawDirection = targetMove;
+            Debug.DrawRay(transform.position, rawDirection, Color.cyan);
+        }
+    }
+
+    void FlyChase ()
+    {
+        Vector3 targetOffset = new Vector3(2, 2.5f, 0);
+        Vector3 targetMove = player.transform.position + targetOffset - transform.position;
+
+        //pos += transform.up * Time.deltaTime * MoveSpeed;
+
+        targetMove = targetMove + transform.up * Mathf.Sin(Time.time * 5 /* frequency */) * .2f /* magnitude */;
+        rawDirection = targetMove * speed;
     }
 
     void GoToLastKnownPosition()

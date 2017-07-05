@@ -64,6 +64,8 @@ public class Characters : MonoBehaviour {
     [HideInInspector]
     public Animator animator;
     [HideInInspector]
+    public SkeletonAnimator SpineSkeletonAnimator;
+    [HideInInspector]
     public Skeleton SpineSkeleton;
     #endregion
 
@@ -121,7 +123,6 @@ public class Characters : MonoBehaviour {
         thisRigidbody = gameObject.GetComponent<Rigidbody>();
         thisSprite = gameObject.GetComponentInChildren<SpriteRenderer>();
         animator = gameObject.GetComponentInChildren<Animator>();
-        SpineSkeleton = gameObject.GetComponentInChildren<SkeletonAnimator>().skeleton;
 
         if (sharedVariables == null)
             Debug.LogError ("The scene is missing the CharacterSharedVariables class, please check your current GameObjects");
