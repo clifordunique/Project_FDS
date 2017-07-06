@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class AstarGrid : MonoBehaviour {
 
-    public bool onlyDisplayPathGizmos = false;
+    public bool displayGridGizmos = false;
 
     public Transform[] pawns;
     public LayerMask GroundLayer;
@@ -16,7 +16,7 @@ public class AstarGrid : MonoBehaviour {
     int gridSizeX, gridSizeY;
 
 
-    private void Start()
+    private void Awake()
     {
         nodeDiameter = nodeRadius * 2;
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
@@ -74,8 +74,8 @@ public class AstarGrid : MonoBehaviour {
 
     public AstarNode NodeFromWorldPoint (Vector3 worldPosition)
     {
-        float percentX = (worldPosition.x + gridWorldSize.x / 2) / gridWorldSize.x;
-        float percentY = (worldPosition.y + gridWorldSize.y / 2) / gridWorldSize.y;
+        float percentX = (worldPosition.x - transform.position.x + gridWorldSize.x / 2) / gridWorldSize.x;
+        float percentY = (worldPosition.y - transform.position.y + gridWorldSize.y / 2) / gridWorldSize.y;
         percentX = Mathf.Clamp01(percentX);
         percentY = Mathf.Clamp01(percentY);
 
@@ -90,18 +90,7 @@ public class AstarGrid : MonoBehaviour {
     {
         Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, gridWorldSize.y, 1));
         
-        if(onlyDisplayPathGizmos)
-        {
-            if (path != null)
-            {
-                foreach (AstarNode node in path)
-                {
-                    Gizmos.color = Color.black;
-                    Gizmos.DrawCube(node.worldPosition, Vector3.one * (nodeDiameter - .1f));
-                }
-            }
-        }
-        else if (grid != null)
+        if (grid != null && displayGridGizmos)
         {
             List<AstarNode> pawnNodes = new List<AstarNode>(); 
 
@@ -112,8 +101,6 @@ public class AstarGrid : MonoBehaviour {
                 Debug.Log("Node for Pawn = " + NodeFromWorldPoint(pawn.position).worldPosition);
             }
 
-
-
             foreach (AstarNode node in grid)
             {
                 Gizmos.color = (node.walkable) ? Color.white : Color.red;
@@ -123,12 +110,6 @@ public class AstarGrid : MonoBehaviour {
                     if (pawnNode.worldPosition == node.worldPosition)
                         Gizmos.color = Color.green;
                 }
-
-                if (path != null)
-                {
-                    if (path.Contains(node))
-                        Gizmos.color = Color.black;
-            }
 
                 Gizmos.DrawCube(node.worldPosition, Vector3.one * (nodeDiameter - .1f));
             }
