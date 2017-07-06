@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class AstarGrid : MonoBehaviour {
 
+    public bool onlyDisplayPathGizmos = false;
+
     public Transform[] pawns;
     public LayerMask GroundLayer;
     public Vector2 gridWorldSize;
@@ -20,6 +22,14 @@ public class AstarGrid : MonoBehaviour {
         gridSizeX = Mathf.RoundToInt(gridWorldSize.x / nodeDiameter);
         gridSizeY = Mathf.RoundToInt(gridWorldSize.y / nodeDiameter);
         CreateGrid();
+    }
+
+    public int MaxSize
+    {
+        get
+        {
+            return gridSizeX * gridSizeY;
+        }
     }
 
     void CreateGrid ()
@@ -79,7 +89,19 @@ public class AstarGrid : MonoBehaviour {
     private void OnDrawGizmos()
     {
         Gizmos.DrawWireCube(transform.position, new Vector3(gridWorldSize.x, gridWorldSize.y, 1));
-        if (grid != null)
+        
+        if(onlyDisplayPathGizmos)
+        {
+            if (path != null)
+            {
+                foreach (AstarNode node in path)
+                {
+                    Gizmos.color = Color.black;
+                    Gizmos.DrawCube(node.worldPosition, Vector3.one * (nodeDiameter - .1f));
+                }
+            }
+        }
+        else if (grid != null)
         {
             List<AstarNode> pawnNodes = new List<AstarNode>(); 
 

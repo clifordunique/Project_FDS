@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 public class AStarPathfinder : MonoBehaviour {
@@ -15,34 +16,30 @@ public class AStarPathfinder : MonoBehaviour {
 
     private void Update()
     {
+        if(Input.GetKeyDown("e"))
         FindPath(seeker.position, target.position);
     }
 
     void FindPath(Vector3 startPos, Vector3 targetPos)
     {
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
         AstarNode startNode = grid.NodeFromWorldPoint(startPos);
         AstarNode targetNode = grid.NodeFromWorldPoint(targetPos);
 
-        List<AstarNode> openSet = new List<AstarNode>();
+        Heap<AstarNode> openSet = new Heap<AstarNode>(grid.MaxSize);
         HashSet<AstarNode> closedSet = new HashSet<AstarNode>();
         openSet.Add(startNode);
 
         while (openSet.Count > 0)
         {
-            AstarNode currentNode = openSet[0];
-            for (int i = 1; i < openSet.Count; i++)
-            {
-                if (openSet[i].fCost < currentNode.fCost || openSet[i].fCost == currentNode.fCost && openSet[i].hCost < currentNode.hCost)
-                {
-                    currentNode = openSet[i];
-                }
-            }
-
-            openSet.Remove(currentNode);
+            AstarNode currentNode = openSet.RemoveFirst();
             closedSet.Add(currentNode);
 
             if(currentNode == targetNode)
             {
+                sw.Stop();
+                print("Path found : " + sw.ElapsedMilliseconds + " ms");
                 RetracePath(startNode, targetNode);
                 return;
             }
@@ -64,6 +61,8 @@ public class AStarPathfinder : MonoBehaviour {
 
                     if (!openSet.Contains(neighbor))
                         openSet.Add(neighbor);
+                    else
+                        openSet.UpdateItem(neighbor);
                 }
             }
         }
