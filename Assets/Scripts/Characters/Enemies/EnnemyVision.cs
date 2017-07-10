@@ -10,15 +10,17 @@ public class EnnemyVision : MonoBehaviour {
 
     #region Sight Setup
     [SerializeField]
-    float sigthRange = 10f;
+    float sightRange = 10f;
     [SerializeField]
     float defaultSightAngle = 45f;
     [SerializeField]
     LayerMask ignoredLayers;
     [SerializeField]
     bool displayVisionInGame = false;
+    [SerializeField]
+    float sweepSpeed = 20f;
 
-    public enum SightMode { Standard, Dynamic, SweepRotation };
+    public enum SightMode { Standard, Dynamic, SweepRotation, LastKnownDirection };
     public SightMode currentSightMode = SightMode.Standard;
     #endregion
 
@@ -42,24 +44,25 @@ public class EnnemyVision : MonoBehaviour {
 	// Update is called once per frame
 	void Update ()
     {
-        currentSightAngle = defaultSightAngle;
-
         //Enemy is awake
         if (thisEnemy.energized)
         {
+            centerToTargetAngle = 0f;
+
+            SightModeManager();
+
             float playerToEnemyDistance = Vector3.Magnitude(transform.position - player.transform.position);
             thisEnemy.PlayerInSight = false;
             drawDetectSphere = false;
 
             //Player is in range
-            if (playerToEnemyDistance <= sigthRange)
+            if (playerToEnemyDistance <= sightRange)
             {
-                centerToTargetAngle = 0f;
-
-                SightModeManager();
-
-                Debug.DrawRay(transform.position, sightDirection, Color.red);
-
+                Debug.DrawRay(transform.position, Quaternion.Euler(0, 0, currentSightAngle / 2) * sightDirection * sightRange, Color.red);
+                Debug.DrawRay(transform.position, sightDirection * sightRange, Color.red);
+                Debug.DrawRay(transform.position, Quaternion.Euler(0, 0, -(currentSightAngle / 2)) * sightDirection * sightRange, Color.red);
+                //Debug.Log(transform.name + " Angle from center = " + centerToTargetAngle + " current sight angle / 2 = " + currentSightAngle / 2);
+                
                 //Player is in fov
                 if (ignoreAngleCheck || centerToTargetAngle <= currentSightAngle / 2)
                 {
@@ -100,48 +103,56 @@ public class EnnemyVision : MonoBehaviour {
         Mesh mesh = new Mesh();
         meshfilter.mesh = mesh;
 
-        Vector3[] vertices = new Vector3[3];
+        Vector3[] vertices = new Vector3[4];
 
         Vector3 sideDir = Vector3.right;
 
-        if (thisEnemy.PlayerInSight)
-        {
+        /*if (thisEnemy.PlayerInSight || currentSightMode == SightMode.SweepRotation || currentSightMode == SightMode.LastKnownDirection)
+        {*/
             sideDir = sightDirection;
-        }
+        /*}
         else
         {
             if (!thisEnemy.thisSprite.flipX)
                 sideDir = transform.right;
             else
                 sideDir = -transform.right;
-        }
+        }*/
 
         vertices[0] = Vector3.zero;
-        vertices[1] = (Quaternion.Euler(0,0, defaultSightAngle) * sideDir * sigthRange);
-        vertices[2] = (Quaternion.Euler(0,0, -defaultSightAngle) * sideDir * sigthRange);
+        vertices[1] = (Quaternion.Euler(0,0, defaultSightAngle / 2) * sideDir * sightRange);
+        vertices[2] = (sideDir * sightRange);
+        vertices[3] = (Quaternion.Euler(0,0, -(defaultSightAngle / 2)) * sideDir * sightRange);
 
         mesh.vertices = vertices;
 
-        int[] tri = new int[3];
+        int[] tri = new int[6];
 
         //  Lower left triangle.
-        tri[0] = 2;
-        tri[1] = 0;
-        tri[2] = 1;
+        tri[0] = 0;
+        tri[1] = 1;
+        tri[2] = 2;
+
+        tri[3] = 0;
+        tri[4] = 2;
+        tri[5] = 3;
 
         mesh.triangles = tri;
 
-        Vector3[] normals  = new Vector3[3];
+        Vector3[] normals  = new Vector3[4];
 
         normals[0] = Vector3.forward;
         normals[1] = Vector3.forward;
         normals[2] = Vector3.forward;
+        normals[3] = Vector3.forward;
 
         mesh.normals = normals;
     }
 
     void SightModeManager ()
     {
+        //Debug.Log("Sight Mode Manager engaged");
+
         ignoreAngleCheck = false; //By default
 
         switch (currentSightMode)
@@ -153,11 +164,39 @@ public class EnnemyVision : MonoBehaviour {
             case SightMode.Dynamic:
                 ChaseSight();
             break;
+
+            case SightMode.SweepRotation:
+                SweepSight();
+            break;
+
+            case SightMode.LastKnownDirection:
+                WatchLastKnownDirection();
+            break;
         }
+    }
+
+    void WatchLastKnownDirection ()
+    {
+        Debug.Log("IMMA FIND YOU MOTHERCUKER");
+        sightDirection = thisEnemy.targetLastKnownPosition - transform.position;
+        sightDirection = sightDirection.normalized;
+
+        centerToTargetAngle = Vector3.Angle(-sightDirection, (transform.position - player.transform.position));
+    }
+
+    void SweepSight ()
+    {
+
+        sightDirection = (Quaternion.Euler(0, 0, sweepSpeed * Time.deltaTime) * sightDirection);
+        sightDirection = sightDirection.normalized;
+
+        centerToTargetAngle = Vector3.Angle(-sightDirection, (transform.position - player.transform.position));
     }
 
     void PatrolSight ()
     {
+        //Debug.Log("Standard patrol");
+
         if (sprite.flipX)
             sightDirection = transform.right;
         else
@@ -168,7 +207,10 @@ public class EnnemyVision : MonoBehaviour {
 
     void ChaseSight()
     {
+        //Debug.Log("Standard chase");
+
         ignoreAngleCheck = true;
+        sightDirection = (player.transform.position - transform.position).normalized;
     }
 
     bool drawDetectSphere = false;
@@ -179,7 +221,6 @@ public class EnnemyVision : MonoBehaviour {
         {
             drawDetectSphere = true;
             thisEnemy.PlayerInSight = true;
-            sightDirection = (player.transform.position - transform.position).normalized;
         }
     }
 

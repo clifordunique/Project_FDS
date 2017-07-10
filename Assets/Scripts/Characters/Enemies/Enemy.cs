@@ -5,6 +5,7 @@ using System.Linq;
 
 public class Enemy : Characters {
 
+    Vector3 rawDirection = Vector3.zero;
     Vector3 moveDirection = Vector3.zero;
 
     [Header ("---ENEMY SPECIFIC---")]
@@ -17,6 +18,12 @@ public class Enemy : Characters {
     bool FlyingEnemy = false;
     [SerializeField]
     float flightYSpeed;
+    [SerializeField]
+    bool useSweepSight = false;
+    [SerializeField]
+    float minSpaceBetweenTargetWhileChasing = 1f;
+    [SerializeField]
+    float slowDownTreshold = 1.5f;
     #endregion
 
     #region Player Related Vars
@@ -36,7 +43,8 @@ public class Enemy : Characters {
     [SerializeField]
     float searchForPlayerDuration = 3f;
     float searchForPlayerTimer = 0f;
-    Vector3 targetLastKnownPosition = Vector3.zero;
+    [HideInInspector]
+    public Vector3 targetLastKnownPosition = Vector3.zero;
     #endregion
 
     #region State Machine Vars
@@ -53,6 +61,7 @@ public class Enemy : Characters {
     Transform ExclamationPoint;
     Transform QuestionMark;
     EnnemyVision vision;
+    private float velocityYSmoothing;
     #endregion
 
     void Start ()
@@ -63,7 +72,12 @@ public class Enemy : Characters {
         else
         {
             UpdateWayPointList();
-            GetNextWayPoint();
+
+
+            if (wayPoints.Count == 0)
+                Debug.LogWarning("No waypoints in " + transform.name + ", deactivating patrol.");
+            else
+                GetNextWayPoint();
         }
 
         //Getting external stuff
@@ -86,7 +100,7 @@ public class Enemy : Characters {
     }
 	
 	// Update is called once per frame
-	void Update ()
+	void LateUpdate ()
     {
         if (!player.dashAttachment == grabbedScript.gameObject && energized)
         {
@@ -94,23 +108,31 @@ public class Enemy : Characters {
             switch (currentBehaviour)
             {
                 case BehaviourStates.Patrol:
-                    vision.currentSightMode = EnnemyVision.SightMode.Standard;
-                    if (LinkedPath != null)
+                    if (!useSweepSight)
+                        vision.currentSightMode = EnnemyVision.SightMode.Standard;
+                    else
+                        vision.currentSightMode = EnnemyVision.SightMode.SweepRotation;
+
+                    if (LinkedPath != null && wayPoints.Count > 0)
                         Patrol();
                     else
-                        moveDirection.x = 0f;
+                    {
+                        rawDirection = Vector3.zero;
+                    }
 
                     ExclamationPoint.gameObject.SetActive(false);
                     QuestionMark.gameObject.SetActive(false);
                     break;
+
                 case BehaviourStates.Chase:
                     vision.currentSightMode = EnnemyVision.SightMode.Dynamic;
                     Chase();
                     ExclamationPoint.gameObject.SetActive(true);
                     QuestionMark.gameObject.SetActive(false);
                     break;
+
                 case BehaviourStates.LostTrack:
-                    vision.currentSightMode = EnnemyVision.SightMode.Standard;
+                    vision.currentSightMode = EnnemyVision.SightMode.LastKnownDirection;
                     GoToLastKnownPosition();
                     searchForPlayerTimer += Time.deltaTime;
 
@@ -135,10 +157,9 @@ public class Enemy : Characters {
 
         UpdateStateTriggers();
 
-        moveDirection.x *= speed;
-
+        moveDirection.x = rawDirection.x;
         if (FlyingEnemy)
-            moveDirection.y *= flightYSpeed;
+            moveDirection.y = rawDirection.y;
 
         //Neutralizing Y moves when grounded, or head hitting ceiling or dashing*
         if (!FlyingEnemy)
@@ -151,7 +172,7 @@ public class Enemy : Characters {
             moveDirection.y += calculatedGravity * Time.deltaTime;
         }
 
-        if(!player.dashAttachment == grabbedScript.gameObject)
+        if (!player.dashAttachment == grabbedScript.gameObject)
             ApplyMoveAndCollisions(moveDirection * Time.deltaTime);
     }
 
@@ -206,42 +227,123 @@ public class Enemy : Characters {
         Vector3 targetMove = currentWayPoint.transform.position - transform.position;
         targetMove = targetMove.normalized;
 
-        moveDirection.x = targetMove.x;
+        rawDirection.x = targetMove.x * speed;
 
         if (FlyingEnemy)
-            moveDirection.y = targetMove.y;
+            rawDirection.y = targetMove.y;
     }
 
     void Chase()
     {
-        Vector3 targetMove = Vector3.zero;
-
-        if (Mathf.Abs(player.transform.position.x - transform.position.x) > 3f)
-        {
-            targetMove = player.transform.position - transform.position;
-            targetMove = targetMove.normalized;
-            moveDirection.x = targetMove.x;
-            if (FlyingEnemy)
-                moveDirection.y = targetMove.y;
-        }
+        if (FlyingEnemy)
+            FlyChase();
         else
         {
-            moveDirection.x = 0;
+            Vector3 targetMove = Vector3.zero;
+            float targetTreshold = slowDownTreshold - minSpaceBetweenTargetWhileChasing;
 
-            if (FlyingEnemy)
-                moveDirection.y = 0f;
-            //Debug.Log("Close to Player");
+            if (Mathf.Abs(player.transform.position.x - transform.position.x) > minSpaceBetweenTargetWhileChasing)
+            {
+                targetMove = player.transform.position - transform.position;
+
+                float targetDistanceX = Mathf.Abs(player.transform.position.x - transform.position.x);
+
+                if (Mathf.Abs(player.transform.position.x - transform.position.x) < slowDownTreshold)
+                {
+                    targetDistanceX -= minSpaceBetweenTargetWhileChasing;
+                    targetDistanceX /= targetTreshold;
+                    targetMove.x = Mathf.Sign(targetMove.x) * targetDistanceX;
+                }
+
+                if (targetMove.x > 1)
+                    targetMove.x = 1;
+                else if (targetMove.x < -1)
+                    targetMove.x = -1f;
+
+                targetMove.x *= speed;
+            }
+            else
+                targetMove.x = 0;
+
+            if (Mathf.Abs(player.transform.position.y - transform.position.y) > minSpaceBetweenTargetWhileChasing)
+            {
+                float targetDistanceY = Mathf.Abs(player.transform.position.y - transform.position.y);
+
+                if (Mathf.Abs(player.transform.position.y - transform.position.y) < slowDownTreshold)
+                {
+                    targetDistanceY -= minSpaceBetweenTargetWhileChasing;
+                    targetDistanceY /= targetTreshold;
+                    targetMove.y = Mathf.Sign(targetMove.y) * targetDistanceY;
+                }
+
+                if (targetMove.y > 1)
+                    targetMove.y = 1;
+                else if (targetMove.y < -1)
+                    targetMove.y = -1f;
+
+                targetMove.y *= speed;
+            }
+            else
+            {
+                targetMove.y = 0;
+            }
+
+            rawDirection = targetMove;
+            Debug.DrawRay(transform.position, rawDirection, Color.cyan);
         }
+    }
+
+    void FlyChase ()
+    {
+        Vector3 targetOffset = new Vector3(2, 2.5f, 0);
+        Vector3 targetMove = player.transform.position + targetOffset - transform.position;
+
+        //pos += transform.up * Time.deltaTime * MoveSpeed;
+
+        targetMove = targetMove + transform.up * Mathf.Sin(Time.time * 5 /* frequency */) * .2f /* magnitude */;
+        rawDirection = targetMove * speed;
     }
 
     void GoToLastKnownPosition()
     {
+        Debug.DrawLine(transform.position, targetLastKnownPosition, Color.cyan);
         Vector3 targetMove = targetLastKnownPosition - transform.position;
-        targetMove = targetMove.normalized;
 
-        moveDirection.x = targetMove.x;
-        if (FlyingEnemy)
-            moveDirection.y = targetMove.y;
+        float targetDistanceX = Mathf.Abs(targetLastKnownPosition.x - transform.position.x);
+
+        float targetTreshold = slowDownTreshold;
+
+        if (Mathf.Abs(targetLastKnownPosition.x - transform.position.x) < slowDownTreshold)
+        {
+            targetDistanceX /= targetTreshold;
+            targetMove.x = Mathf.Sign(targetMove.x) * targetDistanceX;
+        }
+
+        if (targetMove.x > 1)
+            targetMove.x = 1;
+        else if (targetMove.x < -1)
+            targetMove.x = -1f;
+
+        targetMove.x *= speed;
+
+        float targetDistanceY = Mathf.Abs(targetLastKnownPosition.y - transform.position.y);
+
+        if (Mathf.Abs(targetLastKnownPosition.y - transform.position.y) < slowDownTreshold)
+        {
+            targetDistanceY /= targetTreshold;
+            targetMove.y = Mathf.Sign(targetMove.y) * targetDistanceY;
+        }
+
+        if (targetMove.y > 1)
+            targetMove.y = 1;
+        else if (targetMove.y < -1)
+            targetMove.y = -1f;
+
+        targetMove.y *= speed;
+
+        rawDirection = targetMove;
+
+        Debug.Log(transform.parent.name + " go to last known position");
     }
     #endregion
 

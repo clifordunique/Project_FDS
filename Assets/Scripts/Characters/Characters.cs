@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using Spine;
+using Spine.Unity;
 
 //Sebastian Lague on Youtube, kudos to his 2D CharController tuto!
 public class Characters : MonoBehaviour {
@@ -61,6 +63,10 @@ public class Characters : MonoBehaviour {
     public SpriteRenderer thisSprite;
     [HideInInspector]
     public Animator animator;
+    [HideInInspector]
+    public SkeletonAnimator SpineSkeletonAnimator;
+    [HideInInspector]
+    public Skeleton SpineSkeleton;
     #endregion
 
     #region external components
@@ -124,6 +130,11 @@ public class Characters : MonoBehaviour {
         CalculateGravityAndJump();
 	}
 
+    void Start ()
+    {
+
+    } 
+
     void CalculateGravityAndJump ()
     {
         calculatedGravity = -(2 * jumpHeight) / Mathf.Pow(timeToJumpApex, 2);
@@ -143,10 +154,13 @@ public class Characters : MonoBehaviour {
     {
         //Sprite flipping depending on direction
         //Used before collisions calculations to avoid the wall pushing changing Pauline's direction
-        if (a_moveDirection.x < 0)
-            thisSprite.flipX = true;
-        else if (a_moveDirection.x > 0)
-            thisSprite.flipX = false;
+        if (SpineSkeleton != null)
+        {
+            if (a_moveDirection.x < 0)
+                SpineSkeleton.FlipX = true;
+            else if (a_moveDirection.x > 0)
+                SpineSkeleton.FlipX = false;
+        }
 
         //Setting up raycasts and collisions infos for this frame, starting from a blank slate
         UpdateRaycastOrigins();
@@ -183,7 +197,7 @@ public class Characters : MonoBehaviour {
     #region Collision System Methods
     void ApplyVerticalCollision(ref Vector3 moveDirection, ref float directionY, ref float rayLength, ref RaycastHit hit)
     {
-        //Debug.DrawLine(transform.position, hit.point, Color.green);
+        Debug.Log("VERTICAL IT FOR " + transform.name);
         moveDirection.y = (hit.distance - skinWidth) * directionY;
         rayLength = hit.distance;
 
