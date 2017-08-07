@@ -177,7 +177,6 @@ public class EnnemyVision : MonoBehaviour {
 
     void WatchLastKnownDirection ()
     {
-        Debug.Log("IMMA FIND YOU MOTHERCUKER");
         sightDirection = thisEnemy.targetLastKnownPosition - transform.position;
         sightDirection = sightDirection.normalized;
 

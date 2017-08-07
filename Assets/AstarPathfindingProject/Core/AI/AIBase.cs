@@ -137,7 +137,7 @@ namespace Pathfinding {
 		protected void Move (Vector3 position3D, Vector3 deltaPosition) {
 			bool positionDirty = false;
 
-			if (controller != null && controller.enabled) {
+			/*if (controller != null && controller.enabled) {
 				// Use CharacterController
 				tr.position = position3D;
 				controller.Move(deltaPosition);
@@ -145,17 +145,18 @@ namespace Pathfinding {
 				// TODO: Add this into the clampedPosition calculation below to make RVO better respond to physics
 				position3D = tr.position;
 				if (controller.isGrounded) verticalVelocity = 0;
-			} else {
+			} else {*/
 				// Use Transform, Rigidbody or Rigidbody2D
 				float lastElevation;
 				movementPlane.ToPlane(position3D, out lastElevation);
 				position3D += deltaPosition;
 
 				// Position the character on the ground
-				if (usingGravity) position3D = RaycastPosition(position3D, lastElevation);
+				//if (usingGravity) position3D = RaycastPosition(position3D, lastElevation);
 				positionDirty = true;
-			}
+			//}
 
+            /*
 			// Clamp the position to the navmesh after movement is done
 			var clampedPosition = ClampToNavmesh(position3D);
 
@@ -170,14 +171,15 @@ namespace Pathfinding {
 				position3D = clampedPosition;
 				positionDirty = true;
 			}
+            */
 
 			// Assign the final position to the character if we haven't already set it
 			if (positionDirty) {
 				// Note that rigid.MovePosition may or may not move the character immediately.
 				// Check the Unity documentation for the special cases.
-				if (rigid != null) rigid.MovePosition(position3D);
+				/*if (rigid != null) rigid.MovePosition(position3D);
 				else if (rigid2D != null) rigid2D.MovePosition(position3D);
-				else tr.position = position3D;
+				else*/ tr.position = position3D;
 			}
 		}
 
